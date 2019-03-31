@@ -5,8 +5,6 @@ const error = require('./utils/error');
 
 module.exports = () => {
     const [, , ...args] = process.argv;
-    console.log("args==>");
-    console.log(args);
     const cmd = HELPER.setOptions(args);
 
     if (cmd.task == "create") {
