@@ -1,0 +1,26 @@
+{
+  "name": "m5-cli",
+  "version": "1.0.0",
+  "description": "a m5 cli",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/indaam/m5-cli.git"
+  },
+  "keywords": [
+    "tools",
+    "m5"
+  ],
+  "author": "indaam|m5",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/indaam/m5-cli/issues"
+  },
+  "homepage": "https://github.com/indaam/m5-cli#readme",
+  "devDependencies": {
+    "shelljs": "^0.8.3"
+  }
+}
