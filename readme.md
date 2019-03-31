@@ -26,11 +26,12 @@ Output : Automatically create skeleton React Native project, include base config
 
 ## Create react Component
 Command : `m5 create comp <component_type> <component_name>`  
-Output : Generate(create) component base on kesepakatan
+Output : Generate(create) component base on kesepakatan  
+Component Type : [atom|molecule|organisms|container]
 
 ### Command Example
-Create atom ButtonX component  
-`m5 create comp atom ButtonX` shotrcut => `m5 create c a ButtonX`
+Create atom MyButton component  
+`m5 create comp atom MyButton` shotrcut => `m5 create c a MyButton`
 
 Create molecule MyMole component  
 `m5 create comp molecule MyMole` shotrcut => `m5 create c m MyMole`
@@ -40,3 +41,14 @@ Create organism MyOrg component
 
 Create container MyCont component  
 `m5 create comp container MyCont` shotrcut => `m5 create c c MyCont`
+
+### How it works?
+When you first create component, it will create m5 folder. Then on m5 folder, you can see BaseClass, BaseFunction, etc. Basicly ya, just copy then rename component name, You can update that.  
+Also if need to change target component, you can edit m5.config, then generate new component
+
+## Todos
+
+* Command validation
+* Option command
+* Dinamic Component
+* Create Log
