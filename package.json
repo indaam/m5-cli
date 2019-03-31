@@ -17,6 +17,10 @@
     "tools",
     "m5"
   ],
+  "preferGlobal": true,
+  "bin": {
+    "m5": "bin/m5"
+  },
   "author": "indaam|m5",
   "license": "MIT",
   "bugs": {
