@@ -2,13 +2,11 @@
 A CLI for create everything.
 
 ## Install
-Choose One
-`yarn add global m5-cli` or  
+Choose One  
+`npm install -g m5-cli` (recommended) or  
+`npm install m5-cli --save-dev && cd node_modules/m5-cli && npm link` or  
 `yarn add -D m5-cli && cd node_modules/m5-cli && npm link` or  
-`npm install m5-cli -g` or  
-`npm install m5-cli --save-dev && cd node_modules/m5-cli && npm link` or
-`git clone https://github.com/indaam/m5-cli.git && cd m5-cli && npm install && npm link`
-
+`git clone https://github.com/indaam/m5-cli.git && cd m5-cli && npm install && npm link`  
 
 ## Create Project
 #### Create html Project

@@ -1,6 +1,6 @@
 {
   "name": "m5-cli",
-  "version": "1.0.0",
+  "version": "1.0.2",
   "description": "a m5 cli",
   "main": "index.js",
   "scripts": {
@@ -19,7 +19,7 @@
   ],
   "preferGlobal": true,
   "bin": {
-    "m5": "bin/m5"
+    "m5": "./bin/m5"
   },
   "author": "indaam|m5",
   "license": "MIT",
