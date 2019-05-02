@@ -4,210 +4,317 @@ const HELPER = require('../utils/helper');
 const error = require('../utils/error');
 const inject = require('../utils/inject');
 const { exec } = require('child_process');
+const BaseClass = require('./BaseClass');
+
 module.exports = async (cmd) => {
 
     // Set default version plugins
-    const version = {
+    const defaultVersion = {
         "react-native-maps" : "0.24.2",
         "react-native-gesture-handler": "1.1.0",
         "react-native-svg": "9.4.0",
         "react-native-camera": "2.6.0",
+        "react-native-contacts": "4.0.1",
+        "react-native-svg": "9.4.0",
+        "react-native-device-info": "1.6.1"
     }
 
-    const DIRECTORY = {
-        current: process.cwd(),
-        m5: HELPER.getm5Path(__dirname)
-    }
+    class AddPlugins extends BaseClass{
 
-    class addPlugins {
-
-        constructor(cmd, dir, version) {
-            this.data = {
-                version: version,
-                cmd: cmd,
-                dir: dir,
-                pluginName: HELPER.getPluginInfo("name", cmd),
-                pluginVersion: HELPER.getPluginInfo("version", cmd),
-                pluginKey: HELPER.getPluginInfo("key", cmd),
-                projectPath: `${dir.current}`,
-            };
+        constructor(params) {
+            super()
+            this.info = {...params, ...{version : defaultVersion}};
+            this.config = {};
             this.run = {};
         }
 
-        getPackageJson(data){
-            let packageJsonContent = HELPER.getFileContentFromProject(data, "package.json");
-            let packageJsonObject = HELPER.jsonToObject(packageJsonContent);
-            return packageJsonObject
-        }
-
-        getAppjson(data){
-            let appJsonContent = HELPER.getFileContentFromProject(data, "app.json");
-            let appJsonObject = HELPER.jsonToObject(appJsonContent);
-            return appJsonObject
-        }
-
-        async initConfig(data) {
-            this.data["appJson"] = this.getAppjson(data);
-            this.data["packageJson"] = this.getPackageJson(data);
-            if (this.data["appJson"] && this.data["packageJson"]){
-                return 1
-            }
-        }
-
-        async checkPlugin(data) {
-            const { packageJson, appJson, version} = data;
-            if (packageJson["dependencies"][data.pluginName]){
-                HELPER.message("ERROR, PLUGINS IS EXIST")
-                error("", 1)
+        async setConfig(info){
+            const isInstallOnPackage = await this.isInstallOnPackage(info)
+            const isLink = await this.isLink(info)
+            const hasGoogleServiceJson = await this.hasGoogleServiceJson(info)
+            const hasGoogleServicePlist = await this.hasGoogleServicePlist(info)
+            const isGoogleServiceInstall = await this.isGoogleServiceInstall(info)
+            const isFirebaseInstall = await this.isFirebaseInstall(info)
+            const isTaskWrapperInstall = await this.isTaskWrapperInstall(info)
+            const isSetup = await this.isSetup(info)
+            this.config = {
+                isInstallOnPackage: isInstallOnPackage,
+                isLink: isLink,
+                isSetup: isSetup,
+                isFirebaseInstall : isFirebaseInstall,
+                isGoogleServiceInstall: isGoogleServiceInstall,
+                isTaskWrapperInstall: isTaskWrapperInstall,
+                hasGoogleServiceJson: hasGoogleServiceJson,
+                hasGoogleServicePlist: hasGoogleServicePlist,
+                update : { ...inject[info.pluginName]}
             }
             return 1
         }
 
-        async installPlugin(data) {
-            HELPER.message("RUN INSTALL PLUGINS");
-            const version = HELPER.getPluginVersion(data);
-            return await HELPER.execAsync(`yarn add ${data.pluginName}@${version}`);
+        async isInstallOnPackage(info) {
+            const { packageJson, pluginName } = info;
+            if (packageJson["dependencies"][pluginName]){
+                return true
+            }
+            return false
         }
 
-        async updateAndroidFile(data, val){
-            const { filePath, content, addType, regex } = val;
-            const newFilePath = HELPER.validateFilePath(data, filePath);
-            let fileContent = HELPER.getFileContentFromProject(data, newFilePath);
+        async isLink(info) {
+            const fileContent = HELPER.getFileContentFromProject(info, '/android/settings.gradle');
+            const regex = new RegExp(info.pluginName, "gm");
+            return regex.test(fileContent);
+        }
 
-            if (val.delete){
-                fileContent = fileContent.replace(val.delete, "");
+        async isSetup(info) {
+            const fileContent = HELPER.getFileContentFromProject(info, '/android/app/build.gradle');
+            const regex = new RegExp(`M5 START ${info.pluginName}`, "gm");
+            return regex.test(fileContent);
+        }
+
+        async hasGoogleServiceJson(info) {
+            return fs.existsSync(info.projectPath + "/android/app/google-services.json")
+        }
+
+        async hasGoogleServicePlist(info) {
+            return fs.existsSync(info.projectPath + "/ios/"+info.appJson.name+"/GoogleService-Info.plist")
+        }
+
+        async isGoogleServiceInstall(info){
+            const fileContent = HELPER.getFileContentFromProject(info, "android/build.gradle");
+            const check = /classpath(\s)('|")com\.google\.gms\:google\-services\:(\d){1,2}\.(\d){1,2}\.(\d){1,2}('|")/gi
+            return check.test(fileContent);
+        }
+
+        async isFirebaseInstall(info){
+            const fileContent = HELPER.getFileContentFromProject(info, "ios/"+info.appJson.name+"/AppDelegate.m");
+            const check = /Firebase/gi
+            return check.test(fileContent);
+        }
+
+        async isTaskWrapperInstall(info) {
+            const fileContent = HELPER.getFileContentFromProject(info, "android/build.gradle");
+            const check = /task(\s)wrapper\(type\:(\s)Wrapper\)(\s){/gi
+            return check.test(fileContent);
+        }
+
+        async setup(info, config){
+            HELPER.message("RUN setup");
+            if (!config.isInstallOnPackage){
+                await this.installPackage(info)
+            }
+            if (!config.isLink){
+                await this.linkPackage(info)
             }
 
-            if (val.addType == "firstline"){
-                fileContent = val.content + "\n" + fileContent
-            }
-
-            if (val.addType == "lastline"){
-                fileContent = fileContent + "\n" + fileContent
-            }
-
-            fileContent = fileContent.replace(regex, function (res) {
-                if (addType == "before"){
-                    return content + "\n" + res
-                }else{
-                    return res + "\n" + content
+            if (!config.isLink) {
+                const wait = await this.timeout(3000);
+                if (wait){
+                    await this.setupAndroidAndiOs(info, config)
                 }
+            }else{
+                await this.setupAndroidAndiOs(info, config)
+            }
+
+        }
+
+        async setupAndroidAndiOs(info, config){
+            HELPER.message("RUN setupAndroidAndiOs");
+            if (!config.isGoogleServiceInstall) {
+                if (config.update["google-services"]) {
+                    await this.setupGoogleServices(info)
+                }
+            }
+
+            if (!config.isFirebaseInstall) {
+                if (config.update["firebase"]) {
+                    await this.setupFirebase(info)
+                }
+            }
+
+            if (!config.isTaskWrapperInstall) {
+                if (config.update["task-wrapper"]) {
+                    await this.setupTaskWrapper(info)
+                }
+            }
+
+            if (!config.isSetup){
+                if (config.update["files"]) {
+                    await this.setupFileUpdate(info, config)
+                }
+            }
+        }
+
+        async setMessage(info, config){
+            if (config.update["google-services"] && !config.hasGoogleServiceJson) {
+                HELPER.message("", "warning", function() {
+                    console.log('\x1b[33m')
+                    console.log("!IMPORTANT");
+                    console.log(`${info.pluginName} is require google service!`);
+                    console.log(`Need to put google.service.json on android/app/here...`);
+                    console.log(`Read this : https://firebase.google.com/docs/android/setup#add-config-file`);
+                    console.log('\x1b[0m');                    
+                })
+            }
+            if (config.update["firebase"] && !config.hasGoogleServicePlist) {
+                HELPER.message("", "warning", function() {
+                    console.log('\x1b[33m')
+                    console.log("!IMPORTANT");
+                    console.log(`${info.pluginName} is require firebase!`);
+                    console.log(`Need to put GoogleService-Info.plist on ios/${info.appJson.name}/here...`);
+                    console.log(`Read this : https://firebase.google.com/docs/ios/setup#add_firebase_to_your_app`);
+                    console.log('\x1b[0m');                    
+                })
+            }
+            if(info.pluginName == "react-native-maps"){
+                HELPER.message(`!IMPORTANT\nThis plugins need to anable google maps api library, \nGoto : https://console.developers.google.com/apis/library`, "warning");
+            }
+        }
+
+        async installPackage(info) {
+            HELPER.message("RUN installPackage");
+            // iTodo, check when error network
+            const version = HELPER.getPluginVersion(info);
+            return await HELPER.execAsync(`yarn add ${info.pluginName}@${version}`);
+        }
+
+        async linkPackage(info) {
+            HELPER.message("RUN linkPackage");
+            return new Promise(function (resolve, reject) {
+                sh.exec(`osascript -e 'tell app "Terminal"
+            do script "cd ${info.projectPath} && react-native link ${info.pluginName}"
+        end tell'
+            `, (err, stdout, stderr) => {
+                    if (err) {
+                        return;
+                    }
+                    HELPER.message("END linkPackage");
+                    resolve(stdout)
+                });
+
+            })
+
+        }
+
+        async setupGoogleServices(info){
+            HELPER.message("RUN setupGoogleServices");
+            const { files } = inject["google-services"];
+            for (let index = 0; index < files.length; index++) {
+                const file = files[index];
+                await this.updateFile({
+                    info: info,
+                    file: file,
+                    index: index,
+                    name: "google-services"
+                });
+            }
+        }
+
+        async setupFirebase(info){
+            HELPER.message("RUN setupFirebase");
+            const { files } = inject["firebase"];
+            for (let index = 0; index < files.length; index++) {
+                const file = files[index];
+                await this.updateFile({
+                    info: info,
+                    file: file,
+                    index: index,
+                    name: "firebase"
+                });
+            }
+        }
+
+        async setupTaskWrapper(info) {
+            HELPER.message("RUN setupTaskWrapper");
+            const { files } = inject["task-wrapper"];
+            for (let index = 0; index < files.length; index++) {
+                const file = files[index];
+                await this.updateFile({
+                    info: info,
+                    file: file,
+                    index: index,
+                    name: "task-wrapper"
+                });
+            }
+        }
+
+        async setupFileUpdate(info, config){
+            HELPER.message("RUN setupFileUpdate");
+            const { files } = config["update"];
+            for (let index = 0; index < files.length; index++) {
+                const file = files[index];
+                await this.updateFile({
+                    info: info,
+                    file: file,
+                    index: index,
+                    name: info.pluginName
+                });
+            }
+        }
+
+        async updateFile(params){
+            const { info, file, index, name } = params;
+            let { filePath, content, updateType, regex, remove } = file;
+            filePath = HELPER.validateFilePath(info, filePath);
+            let extention = HELPER.getExtention(filePath);
+            let fileContent = HELPER.getFileContentFromProject(info, filePath);
+
+            if (remove){
+                fileContent = fileContent.replace(remove, "");
+            }
+
+            fileContent = HELPER.findThenUpdateContent({
+                regex: regex,
+                fileContent: content,
+                originalContent: fileContent,
+                updateType: updateType,
+                commentDisplay: true,
+                commentType: extention,
+                commentMsg: `${name} ${index}`,
             });
 
-            if (data.pluginKey) {
-                fileContent = fileContent.replace("__PLUGIN_KEY__", data.pluginKey)
+            if (info.pluginKey) {
+                fileContent = fileContent.replace(/__PLUGIN_KEY__/gm, info.pluginKey)
             }
 
-            fs.writeFileSync(`${data.projectPath}/${newFilePath}`, fileContent, 'utf8');
+            HELPER.message(`RUN updateFile ${name} ${index}`);
+
+            fs.writeFileSync(`${info.projectPath}/${filePath}`, fileContent, 'utf8');
+
         }
 
-        async initGoogleServices(data){
-            
-        }
-
-        async setupAndroid(data) {
-            HELPER.message("RUN SETUP ANDROID");
-            const { files } = inject[data.pluginName];
-
-            if (inject[data.pluginName]["google-services"]){
-                await this.initGoogleServices(data);
+        end(info, config){
+            if( config.isSetup){
+                HELPER.message(`IS ALREADY SETUP ${(info.pluginName).toUpperCase()}`, 'warning');
+            }else{
+                HELPER.message(`SUCCESS SETUP ${(info.pluginName).toUpperCase()}.\nTry, m5 demo to see`, 'success');
             }
-            if (files){
-                for (let val of files) {
-                    await this.updateAndroidFile(data, val)
-                }
-                return 1
-            }
-            return 1
+            process.exit();
         }
 
-        setPluginsValue(data){
-            const version = HELPER.getPluginVersion(data);
-            if (data.pluginKey){
-                return {
-                    "version": version,
-                    "key" : data.pluginKey
-                }
-            }
-            return version
-        }
-
-        end(data){
-            HELPER.message("SUCCESS SETUP", data.pluginName)
-        }
-
-        async updateAppJson(data){
-            HELPER.message("RUN UPDATE APP JSON");
-            let appJsonContent = HELPER.getFileContentFromProject(data, "app.json");
+        async updateAppJson(info, config){
+            HELPER.message("RUN updateAppJson");
+            let appJsonContent = HELPER.getFileContentFromProject(info, "app.json");
             const appJson = HELPER.jsonToObject(appJsonContent);
 
             if (appJson["nativePlugins"]){
-                appJson["nativePlugins"][data.pluginName] = this.setPluginsValue(data);
+                appJson["nativePlugins"][info.pluginName] = HELPER.getPluginsName(info);
             }else{
                 appJson["nativePlugins"] = {};
-                appJson["nativePlugins"][data.pluginName] = this.setPluginsValue(data);
+                appJson["nativePlugins"][info.pluginName] = HELPER.getPluginsName(info);
             }
 
-            fs.writeFileSync(`${data.projectPath}/app.json`, JSON.stringify(appJson, null, 2), 'utf8');
-
-            this.end(data);
-            setTimeout(function () {
-                process.exit(1);
-            }, 1000);
-        }
-
-        async linkPlugin(data) {
-            // iTodo, this not close procced
-            HELPER.message("RUN LINK PLUGINS");
-            exec(`react-native link ${data.pluginName}`, (err, stdout, stderr) => {
-                console.log(err);
-                console.log(stdout);
-                console.log(stderr);
-                if (err) {
-                    console.error(err);
-                    return;
-                }
-                return 1
-            });
-            // return await HELPER.execAsync(`react-native link ${data.pluginName}`);
-        }
-
-        async createSample(data){
-            HELPER.message("RUN LINK PLUGINS");
-            const sampleContent = HELPER.getFileContentFromM5(data, 'files/' + data.pluginName + ".jsx");
-            const componentName = HELPER.createComponentName(data.pluginName);
-            fs.writeFileSync(`${data.projectPath}/M5Component/${componentName}`, sampleContent, 'utf8');
-        }
-
-        async setDelay (){
-            HELPER.message("SET DELAY");
-            return new Promise(function (resolve, reject) {
-                setTimeout(() => {
-                    resolve({
-                        "success": 1
-                    })
-                }, 5000)
-            })
+            fs.writeFileSync(`${info.projectPath}/app.json`, JSON.stringify(appJson, null, 2), 'utf8');
+            this.end(info, config);
         }
 
         async runCmd(){
-            const { data } = this;
-            console.log(data);
-            this.run["initConfig"] = await this.initConfig(data);
-            this.run["checkPlugin"] = await this.checkPlugin(this.data);
-
-            this.run["installPlugin"] = await this.installPlugin(this.data)
-            this.run["linkPlugin"] = await this.linkPlugin(this.data)
-            this.run["setDelay"] = await this.setDelay();
-            const { success } = this.run["setDelay"]
-            if (success){
-                HELPER.message("RUN AFTER DELAY");
-                this.run["setupAndroid"] = await this.setupAndroid(this.data);
-                this.run["updateAppJson"] = await this.updateAppJson(this.data);
-                // this.run["createSample"] = await this.createSample(this.data);
-            }
-
-
+            const { info } = this;
+            this.run["updateInfo"] = await this.updateInfo(info);
+            this.run["setConfig"] = await this.setConfig(info);
+            const { config } = this;
+            this.run["setup"] = await this.setup(info, config);
+            this.run["updateAppJson"] = await this.updateAppJson(info, config);
+            this.run["setMessage"] = await this.setMessage(info, config);
         }
 
         init() {
@@ -215,19 +322,15 @@ module.exports = async (cmd) => {
         }
     }
 
-    const html = new addPlugins(cmd, DIRECTORY, version);
-    html.init();
+    const runPlugins = new AddPlugins({
+        cmd : cmd,
+        dir : HELPER.getDir()
+    });
+
+
+    runPlugins.init();
+
+
+    
 
 }
-
-// iTodos
-// * check if packagejson ready
-// * check if linking ready
-// * check if setup ready
-// * check dependencies android
-// * check android/app/google-services.json
-
-
-// ext\s{(\D|\d)*?}
-// (\w){1,30}(\s)?=(\s)?("?)(\d){1,10}(.)?(\d){1,10}(.)?(\d)?("?)
-// (\w){1,40}(\s?)=(\s?)("?)(\S){1,10}("?)
