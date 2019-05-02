@@ -1,4 +1,41 @@
 const inject = {};
+
+const reactNativeContactsInfoPlist = `
+    <key>NSContactsUsageDescription</key>
+    <string></string>
+`;
+// r = /\<key\>NSLocationWhenInUseUsageDescription<\/key\>\s+(\<string\><\/string\>)/gm
+
+// after
+/*
+<key>NSLocationWhenInUseUsageDescription</key>
+<string></string>
+*/
+
+const reactNativeContactsProGuard = `
+-keep class com.rt2zz.reactnativecontacts.** {*;}
+-keepclassmembers class com.rt2zz.reactnativecontacts.** {*;}
+`;
+
+const reactNativeContactsUserPermissions = `
+<uses-permission android:name="android.permission.WRITE_CONTACTS" />
+<uses-permission android:name="android.permission.READ_PROFILE" />
+<uses-permission android:name="android.permission.WRITE_PROFILE" />
+`;
+
+const reactNativeCameraInfoPlist = `
+	<key>NSCameraUsageDescription</key>
+	<string>This app needs camera access to show off</string>
+
+	<!-- Include this only if you are planning to use the camera roll -->
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>This app need library access so you can add pictures</string>
+
+	<!-- Include this only if you are planning to use the microphone for video recording -->
+	<key>NSMicrophoneUsageDescription</key>
+	<string>This app needs access to microphone for video recording</string>
+`;
+
 const reactNativeMapsDependencies = `
     implementation(project(':react-native-maps')){
        exclude group: 'com.google.android.gms', module: 'play-services-base'
@@ -12,6 +49,20 @@ const reactNativeMapsMetadata = `
     <meta-data
     android:name="com.google.android.geo.API_KEY"
     android:value="__PLUGIN_KEY__"/>
+`;
+
+const reactNativeMapsPod = `
+pod 'react-native-google-maps', :path => '../node_modules/react-native-maps'
+pod 'GoogleMaps'
+pod 'Google-Maps-iOS-Utils'
+`;
+
+const reactNativeCameraPod = `
+pod 'react-native-camera', :path => '../node_modules/react-native-camera', subspecs: [
+    'TextDetector',
+    'FaceDetectorMLKit',
+    'BarcodeDetectorMLKit'
+  ]
 `;
 
 const reactNativeGestureHandlerActivityDelegate = `
@@ -54,100 +105,248 @@ const reactNativeCameraUserermissions = `
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
 `;
 
-inject["react-native-maps"] = {
-    "google-services" : false,
-    "com.google.android.gms": ["play-services-base", "play-services-maps"],
-    "files": [{
-        'type': "android",
-        "filePath": "android/app/build.gradle",
-        "content": reactNativeMapsDependencies,
-        'delete': `implementation project(':react-native-maps')`,
-        'addType': `after`,// before | after | firstline | lastline
-        'regex': /dependencies\s{/gi
-    },
-    {
-        'type': "android",
-        "filePath": "android/app/src/main/AndroidManifest.xml",
-        "content": reactNativeMapsMetadata,
-        'addType': `before`,// before | after | firstline | lastline
-        'regex': /<\/application>/gi
-    }]
-}
 
 inject["task-wrapper"] = {
-    files : [{
-        'type': "android",
-        "filePath": "android/build.gradle",
-        "content": taskWrapper,
-        'addType': `lastline`,
-    }]
+    files: [
+        {
+            'type': "android",
+            "filePath": "android/build.gradle",
+            "content": taskWrapper,
+            'updateType': `lastline`,
+        }]
+}
+
+inject["firebase"] = {
+    files: [
+        {
+            'type': "ios",
+            "filePath": "ios/__APP_NAME__/AppDelegate.m",
+            "content": `#import <Firebase.h>`,
+            'regex': /\#import(\s)\"AppDelegate\.h\"/gi,
+            'updateType': `after`,
+        },
+        {
+            'type': "ios",
+            "filePath": "ios/__APP_NAME__/AppDelegate.m",
+            "content": `[FIRApp configure];`,
+            'regex': /rootView\.backgroundColor/gi,
+            'updateType': `before`,
+        },
+        {
+            'type': "ios",
+            "filePath": "ios/Podfile",
+            "content": `pod 'Firebase/Core'`,
+            'regex': /third\-party\-podspecs\/Folly\.podspec("|')/gi,
+            'updateType': `after`,
+        }
+    ]
 }
 
 inject["google-services"] = {
-    files : [{
-        'type': "android",
-        "filePath": "android/build.gradle",
-        "content": `\n\t\tclasspath 'com.google.gms:google-services:4.0.1';`,
-        'addType': `after`,
-        'regex': /classpath(\s)'com.android.tools.build:gradle:(\d){1,3}.(\d){1,3}.(\d){1,3}'/gi
-    },
-    {
-        'type': "android",
-        "filePath": "android/app/build.gradle",
-        "content": `apply plugin: 'com.google.gms.google-services'`,
-        'addType': `lastline`,
-    }]
+    "files": [
+        {
+            'type': "android",
+            "filePath": "android/build.gradle",
+            "content": `\n\t\tclasspath 'com.google.gms:google-services:4.0.1';`,
+            'updateType': `after`,
+            'regex': /classpath(\s)'com.android.tools.build:gradle:(\d){1,3}.(\d){1,3}.(\d){1,3}'/gi
+        },
+        {
+            'type': "android",
+            "filePath": "android/app/build.gradle",
+            "content": `apply plugin: 'com.google.gms.google-services'`,
+            'updateType': `lastline`,
+        }]
+}
+
+inject["react-native-maps"] = {
+    "google-services": false,
+    "com.google.android.gms": ["play-services-base", "play-services-maps"],
+    "files": [
+        {
+            'type': "android",
+            "filePath": "android/app/build.gradle",
+            "content": reactNativeMapsDependencies,
+            'updateType': `replace`,// before | after | firstline | lastline
+            'regex': /implementation(\s)project\(\':react-native-maps\'\)/gi
+        },
+        {
+            'type': "android",
+            "filePath": "android/app/src/main/AndroidManifest.xml",
+            "content": reactNativeMapsMetadata,
+            'updateType': `before`,// before | after | firstline | lastline
+            'regex': /<\/application>/gi
+        },
+        {
+            'type': "ios",
+            "filePath": "ios/Podfile",
+            "content": reactNativeMapsPod,
+            'updateType': `after`,// before | after | firstline | lastline
+            'regex': /\'..\/node_modules\/react-native-maps\'/gi
+        },
+        {
+            'type': "ios",
+            "filePath": "ios/__APP_NAME__/AppDelegate.m",
+            "content": `#import <GoogleMaps/GoogleMaps.h>`,
+            'updateType': `after`,// before | after | firstline | lastline
+            'regex': /\<React\/RCTRootView\.h\>/gi
+        },
+        {
+            'type': "ios",
+            "filePath": "ios/__APP_NAME__/AppDelegate.m",
+            "content": `[GMSServices provideAPIKey:@"__PLUGIN_KEY__"];`,
+            'updateType': `before`,// before | after | firstline | lastline
+            'regex': /rootView\.backgroundColor/gi
+        }
+    ]
 }
 
 inject["react-native-gesture-handler"] = {
     "google-services": false,
-    "files" : [{
-        'type': "android",
-        "filePath": "android/app/src/main/java/com/__APP_NAME__/MainActivity.java",
-        "content": reactNativeGestureHandlerActivityDelegate,
-        'addType': `after`,
-        "regex": /getMainComponentName\(\)(\s?){([^}]+)}/gi
-    },
-    {
-        'type': "android",
-        "filePath": "android/app/src/main/java/com/__APP_NAME__/MainActivity.java",
-        "content": reactNativeGestureHandlerImportActivity,
-        'addType': `after`,
-        "regex": /com.facebook.react.ReactActivity;/gi
-    }]
+    "files": [
+        {
+            'type': "android",
+            "filePath": "android/app/build.gradle",
+            "content": `implementation project(':react-native-gesture-handler')`,
+            'updateType': `replace`,
+            "regex": /implementation(\s)project\(\':react-native-gesture-handler\'\)/gi
+        },
+        {
+            'type': "android",
+            "filePath": "android/app/src/main/java/com/__APP_NAME__/MainActivity.java",
+            "content": reactNativeGestureHandlerActivityDelegate,
+            'updateType': `after`,
+            "regex": /getMainComponentName\(\)(\s?){([^}]+)}/gi
+        },
+        {
+            'type': "android",
+            "filePath": "android/app/src/main/java/com/__APP_NAME__/MainActivity.java",
+            "content": reactNativeGestureHandlerImportActivity,
+            'updateType': `after`,
+            "regex": /com.facebook.react.ReactActivity;/gi
+        }]
 }
 
-inject["react-native-gesture-camera"] = {
+inject["react-native-camera"] = {
+    "firebase": true,
     "google-services": true,
     "task-wrapper": true,
-    "files" : [{
-        'type': "android",
-        "filePath": "android/gradle.properties",
-        "content": `org.gradle.jvmargs=-Xmx4g -XX:MaxPermSize=1g -XX:+HeapDumpOnOutOfMemoryError -Dfile.encoding=UTF-8`,
-        'addType': `lastline`,
-    },
-    {
-        'type': "android",
-        "filePath": "android/app/build.gradle",
-        "content": `missingDimensionStrategy 'react-native-camera', 'mlkit'`,
-        'addType': `after`,
-        'regex': /compileSdkVersion(\s)rootProject\.ext\.compileSdkVersion/gi
-    },
-    {
-        'type': "android",
-        "filePath": "android/app/build.gradle",
-        "content": reactNativeCameraPackagingOptions,
-        'addType': `after`,
-        'regex': /buildTypes(\s){([^}]+)}([^}]+)}/gi
-    },
-    {
-        'type': "android",
-        "filePath": "android/app/src/main/AndroidManifest.xml",
-        "content": reactNativeCameraUserermissions,
-        'addType': `after`,
-        'regex': /\<uses-permission(\s)android:name="android\.permission\.INTERNET"(\s)?\/\>/gi
-    }]
+    "files": [
+        {
+            'type': "android",
+            "filePath": "android/app/build.gradle",
+            "content": `implementation project(':react-native-camera')`,
+            'updateType': `replace`,
+            "regex": /implementation(\s)project\(\':react-native-camera\'\)/gi
+        },
+        {
+            'type': "android",
+            "filePath": "android/gradle.properties",
+            "content": `org.gradle.jvmargs=-Xmx4g -XX:MaxPermSize=1g -XX:+HeapDumpOnOutOfMemoryError -Dfile.encoding=UTF-8`,
+            'updateType': `lastline`,
+        },
+        {
+            'type': "android",
+            "filePath": "android/app/build.gradle",
+            "content": `    missingDimensionStrategy 'react-native-camera', 'mlkit'`,
+            'updateType': `after`,
+            'regex': /targetSdkVersion(\s)rootProject\.ext\.targetSdkVersion/gi
+        },
+        {
+            'type': "android",
+            "filePath": "android/app/build.gradle",
+            "content": reactNativeCameraPackagingOptions,
+            'updateType': `after`,
+            'regex': /buildTypes(\s){([^}]+)}([^}]+)}/gi
+        },
+        {
+            'type': "android",
+            "filePath": "android/app/src/main/AndroidManifest.xml",
+            "content": reactNativeCameraUserermissions,
+            'updateType': `after`,
+            'regex': /\<uses-permission(\s)android:name="android\.permission\.INTERNET"(\s)?\/\>/gi
+        },
+        {
+            'type': "ios",
+            "filePath": "ios/Podfile",
+            "content": reactNativeCameraPod,
+            'updateType': `replace`,
+            'regex': /pod(\s)\'react-native-camera\'\,(\s):path =>(\s)\'..\/node_modules\/react-native-camera\'/gi
+        },
+        {
+            'type': "ios",
+            "filePath": "ios/__APP_NAME__/Info.plist",
+            "content": reactNativeCameraInfoPlist,
+            'updateType': `after`,
+            'regex': /\<string\>UIInterfaceOrientationLandscapeRight<\/string\>([^((y)>)]+)y\>/gi
+        }
+    ]
 }
 
+
+inject["react-native-contacts"] = {
+    "firebase": false,
+    "google-services": false,
+    "task-wrapper": false,
+    "files": [
+        {
+            'type': "android",
+            "filePath": "android/app/build.gradle",
+            "content": `implementation project(':react-native-contacts')`,
+            'updateType': `replace`,
+            "regex": /implementation(\s)project\(\':react-native-contacts\'\)/gi
+        },
+        {
+            'type': "android",
+            "filePath": "android/app/proguard-rules.pro",
+            "content": reactNativeContactsProGuard,
+            'updateType': `lastline`,
+        },
+        {
+            'type': "android",
+            "filePath": "android/app/src/main/AndroidManifest.xml",
+            "content": reactNativeContactsUserPermissions,
+            'updateType': `after`,
+            'regex': /\<uses-permission(\s)android:name="android\.permission\.INTERNET"(\s)?\/\>/gi
+        },
+        {
+            'type': "ios",
+            "filePath": "ios/__APP_NAME__/Info.plist",
+            "content": reactNativeContactsInfoPlist,
+            'updateType': `after`,
+            'regex': /\<key\>NSLocationWhenInUseUsageDescription<\/key\>\s+(\<string\><\/string\>)/gm
+        }
+    ]
+}
+
+inject["react-native-svg"] = {
+    "firebase": false,
+    "google-services": false,
+    "task-wrapper": false,
+    "files": [
+        {
+            'type': "android",
+            "filePath": "android/app/build.gradle",
+            "content": `implementation project(':react-native-svg')`,
+            'updateType': `replace`,
+            "regex": /implementation(\s)project\(\':react-native-svg\'\)/gi
+        }
+    ]
+}
+
+inject["react-native-device-info"] = {
+    "firebase": false,
+    "google-services": false,
+    "task-wrapper": false,
+    "files": [
+        {
+            'type': "android",
+            "filePath": "android/app/build.gradle",
+            "content": `implementation project(':react-native-device-info')`,
+            'updateType': `replace`,
+            "regex": /implementation(\s)project\(\':react-native-device-info\'\)/gi
+        }
+    ]
+}
 
 module.exports = inject
