@@ -1,134 +1,130 @@
 const fs = require('fs');
 const sh = require("shelljs");
 const HELPER = require('../utils/helper');
+const BaseClass = require('./BaseClass');
 
 module.exports = async (cmd) => {
 
-    const DIRECTORY = {
-        current: process.cwd(),
-        m5: HELPER.getm5Path(__dirname)
-    }
+    class Demo extends BaseClass {
 
-    class demo {
-
-        constructor(cmd, dir) {
-            this.data = {
-                cmd: cmd,
-                dir: dir,
-                projectPath: `${dir.current}`,
-            };
-            this.run = {};
+        constructor(params){
+            super()
+            this.info = {...params}
         }
 
-        getPackageJson(data){
-            let packageJsonContent = HELPER.getFileContentFromProject(data, "package.json");
-            let packageJsonObject = HELPER.jsonToObject(packageJsonContent);
-            return packageJsonObject
+        async createDemoDir(info){
+            HELPER.message("RUN createDemoDir");
+            const exist = fs.existsSync(info.projectPath + "/" + "M5Demo");
+            if( !exist){
+                return await this.cloneDemo(info);
+            }
+            return
         }
 
-        getAppjson(data){
-            let appJsonContent = HELPER.getFileContentFromProject(data, "app.json");
-            let appJsonObject = HELPER.jsonToObject(appJsonContent);
-            return appJsonObject
+        async cloneDemo(info){
+            HELPER.message("RUN cloneDemo");
+            return await HELPER.execAsync(`cp -Rv ${info.dir.m5}/files/Demo/. ${info.projectPath}/M5Demo/`);
         }
 
-        async initConfig(data) {
-            this.data["appJson"] = this.getAppjson(data);
-            this.data["packageJson"] = this.getPackageJson(data);
-            if (this.data["appJson"] && this.data["packageJson"]){
-                return 1
+        async updateRoutes(info){
+            HELPER.message("RUN updateRoutes");
+            const { nativePlugins } = info.appJson;
+            const importList = HELPER.createImportList(nativePlugins);
+            const screenList = HELPER.createsSreenList(nativePlugins);
+            let routesDemo = HELPER.getFileContentFromProject(info, "M5Demo/routes/index.js");
+
+            routesDemo = HELPER.findThenUpdateContent({
+                regex : /(\/\*(\s)M5(\s)import(\s))([.|\s|\S*])+(\/\*(\s)end(\s)M5(\s)import(\s)\*\/)/gm,
+                fileContent: importList,
+                originalContent: routesDemo,
+                updateType: "replace",
+                commentDisplay: false,
+                commentType: null,
+                commentMsg: null,
+            });
+
+            routesDemo = HELPER.findThenUpdateContent({
+                regex: /const(\s)screenList(\s)?=(\s)?(\{[^}]+\})/gi,
+                fileContent: screenList,
+                originalContent: routesDemo,
+                updateType: "replace",
+                commentDisplay: false,
+                commentType: null,
+                commentMsg: null,
+            });
+
+            return fs.writeFileSync(`${info.projectPath}/M5Demo/routes/index.js`, routesDemo, 'utf8');
+        }
+
+        async updateRootIndex(info){
+            HELPER.message("RUN updateRootIndex");
+            let indexRootContent = HELPER.getFileContentFromProject(info, "index.js");
+            indexRootContent = indexRootContent.replace(/import(\s)(App)(\s)from(\s)("|')(.){1,20}('|");/gi, `import App from "./M5Demo/App";`)
+            return fs.writeFileSync(`${info.projectPath}/index.js`, indexRootContent, 'utf8');
+        }
+
+        async updateNavList(info){
+            HELPER.message("RUN updateNavList");
+            const navList = HELPER.createObjectList(info.appJson);
+            let landingDemoContent = HELPER.getFileContentFromProject(info, "M5Demo/containers/Landing/index.js");
+
+            landingDemoContent = HELPER.findThenUpdateContent({
+                regex : /const(\s)?navigationList(\s)?=(\s)?(\[[^\]]+\])/gi,
+                fileContent: navList,
+                originalContent: landingDemoContent,
+                updateType: "replace",
+                commentDisplay: false,
+                commentType: null,
+                commentMsg: null,
+            });
+
+            return fs.writeFileSync(`${info.projectPath}/M5Demo/containers/Landing/index.js`, landingDemoContent, 'utf8');
+        }
+
+        async addReactNavigation(info){
+            const { packageJson } = info;
+            HELPER.message("RUN addReactNavigation");
+            if( packageJson && packageJson.dependencies && !packageJson.dependencies["react-navigation"]){
+                await HELPER.execAsync(`cd ${info.projectPath} && yarn add react-navigation`);
             }
         }
 
-        async checkDir(data){
-            if (!fs.existsSync(data.dir.projectPath + "/" + "M5Demo")) {
-                return {
-                    "exists": 0
-                }
-            } else {
-                return {
-                    "exists": 1
-                }
-            } 
-        }
-        async cloneDemo(data){
-            return await HELPER.execAsync(`cp -Rv ${data.dir.m5}/files/Demo/. ${data.projectPath}/`);
+        async addReactNativeGestureHandler(info){
+            const { packageJson } = info;
+            HELPER.message("RUN addReactNavigation");
+            if( packageJson && packageJson.dependencies && !packageJson.dependencies["react-native-gesture-handler"]){
+                HELPER.message(`Error!\ninstall react-native-gesture-handler first,\ntype m5 add react-native-gesture-handler`, 'error')
+                // await HELPER.execAsync(`m5 add react-native-gesture-handler`);
+            }
         }
 
-        async updateIndexDemo(data){
-            const { nativePlugins } = data.appJson;
-            const importList = HELPER.createImportList(nativePlugins);
-            const screenList = HELPER.createsSreenList(nativePlugins);
-            let indexDemoContent = HELPER.getFileContentFromProject(data, "M5Demo/index.js");
-
-            indexDemoContent = HELPER.findThenUpdateContent({
-                regex: /const(\s)LandingScreen(\s)?=(\s)?createStackNavigator\(/gi,
-                fileContent: importList,
-                originalContent: indexDemoContent,
-                updateType: "before",
-                commentDisplay: false,
-                commentType: null,
-                commentMsg: null,
-            });
-
-            indexDemoContent = HELPER.findThenUpdateContent({
-                regex: /const(\s)?screenList(\s)?=(\s)?{([^}]+)LandingScreen/gi,
-                fileContent: "," + screenList,
-                originalContent: indexDemoContent,
-                updateType: "after",
-                commentDisplay: false,
-                commentType: null,
-                commentMsg: null,
-            });
-
-            return fs.writeFileSync(`${data.projectPath}/M5Demo/index.js`, indexDemoContent, 'utf8');
-        }
-
-        async updateRootIndex(data){
-            let indexRootContent = HELPER.getFileContentFromProject(data, "index.js");
-            indexRootContent = indexRootContent.replace(/import(\s)(App)(\s)from(\s)("|')(.){1,20}('|");/gi, `import App from "./AppDemo";`)
-            return fs.writeFileSync(`${data.projectPath}/index.js`, indexRootContent, 'utf8');
-        }
-
-        async updateNavList(data){
-            const navList = HELPER.createObjectList(data.appJson);
-            let landingDemoContent = HELPER.getFileContentFromProject(data, "M5Demo/landing.js");
-            landingDemoContent = HELPER.findThenUpdateContent({
-                regex: /export(\s)default(\s)class(\s)(\w){1,90}(\s)?/gi,
-                fileContent: navList + ";\n",
-                originalContent: landingDemoContent,
-                updateType: "before",
-                commentDisplay: false,
-                commentType: null,
-                commentMsg: null,
-            });
-
-            return fs.writeFileSync(`${data.projectPath}/M5Demo/landing.js`, landingDemoContent, 'utf8');
-        }
-
-        async addDefaultPackage(data){
-            return await HELPER.execAsync(`cd ${data.projectPath} && yarn add react-navigation`);
+        async addMessage(info){
+            HELPER.message(`!NOTE\nfor run on iOs, you nedd to cd ios then pod install or yarn pod`, "warning");
         }
 
         async runCmd(){
-            const { data } = this;
-            this.run["initConfig"] = await this.initConfig(data);
-            this.run["checkDir"] = await this.checkDir(this.data);
-            // if (!this.run["checkDir"]["exists"]){
-                this.run["cloneDemo"] = await this.cloneDemo(this.data);
-                this.run["updateIndexDemo"] = await this.updateIndexDemo(this.data);
-                this.run["updateRootIndex"] = await this.updateRootIndex(this.data);
-                this.run["updateNavList"] = await this.updateNavList(this.data);
-                this.run["addDefaultPackage"] = await this.addDefaultPackage(this.data);
-            // }
+            const { info } = this;
+            this.run["updateInfo"] = await this.updateInfo(info);
+            this.run["createDemoDir"] = await this.createDemoDir(info);
+            this.run["addReactNavigation"] = await this.addReactNavigation(info);
+            this.run["addReactNativeGestureHandler"] = await this.addReactNativeGestureHandler(info);
+
+            this.run["updateRootIndex"] = await this.updateRootIndex(info);
+            this.run["updateRoutes"] = await this.updateRoutes(info);
+            this.run["updateNavList"] = await this.updateNavList(info);
+            this.run["addMessage"] = await this.addMessage(info);
+
         }
 
-        init() {
-            this.runCmd();
+        init(){
+            this.runCmd()
         }
     }
 
-    const runDemo = new demo(cmd, DIRECTORY);
+    const runDemo = new Demo({
+        cmd : cmd,
+        dir : HELPER.getDir()
+    });
     runDemo.init();
 
 }
