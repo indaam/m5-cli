@@ -1,2 +1,3 @@
 #!/usr/bin/env node
-require('../')()
+const M5 = require('../')
+M5.cmd();
