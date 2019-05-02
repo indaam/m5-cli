@@ -15,7 +15,7 @@ const cmd = () => {
             case 'comp':
                 require('./cmds/CreateComp')({ ...cmd, ...CONFIG })
                 break
-            
+
             case 'rn':
             case 'r-n':
             case 'react-native':
@@ -32,16 +32,16 @@ const cmd = () => {
         require('./cmds/AddPlugins')({ ...cmd, ...CONFIG })
     } else if (/-v|-version|v|version/.test(cmd.task)) {
         require('./cmds/version')(args)
-    } else if (/-help|-h|h|help/.test(cmd.task)){
+    } else if (/-help|-h|h|help/.test(cmd.task)) {
         require('./cmds/help')(args)
-    }else if(!args.length){
+    } else if (!args.length) {
         require('./cmds/help')(args)
-    }else{
+    } else {
         error(`m5 ${args} not valid command!, try m5 -h`, true)
     }
 }
 
 module.exports = {
-    HELPER : HELPER,
-    cmd : cmd
+    HELPER: HELPER,
+    cmd: cmd
 }

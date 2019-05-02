@@ -4,12 +4,12 @@ const HELPER = {};
 
 
 HELPER.getVersionName = (name) => {
-    if( /@/.test(name) ){
+    if (/@/.test(name)) {
         const data = name.split("@");
         return {
             name: data[0],
             version: data[1]
-        }        
+        }
     }
     return {
         name: name,
@@ -30,7 +30,7 @@ HELPER.createObjectList = (data) => {
     const { nativePlugins } = data;
     const list = [];
 
-    for (let d in nativePlugins){
+    for (let d in nativePlugins) {
         list.push({
             title: HELPER.createComponentTitle(d),
             navigation: HELPER.createComponentName(d),
@@ -46,7 +46,7 @@ HELPER.createImportList = (data) => {
     const close = `\n/* end M5 import */`;
 
     const importList = [];
-    for( let d in data){
+    for (let d in data) {
         const componentName = HELPER.createComponentName(d);
         const importName = `import ${componentName} from "../containers/${componentName}";`;
         importList.push(importName)
@@ -59,7 +59,7 @@ HELPER.createsSreenList = (data) => {
         "LandingScreen": "LandingScreen"
     };
 
-    for( let d in data){
+    for (let d in data) {
         const componentName = HELPER.createComponentName(d);
         screenList[componentName] = componentName;
     }
@@ -69,7 +69,7 @@ HELPER.createsSreenList = (data) => {
 HELPER.stringToAbject = (str) => {
     // iTodo, need to update
     const obj = {};
-    if( str){
+    if (str) {
         if (str.indexOf("=") > -1) {
             const setArray = str.split("=");
             obj[setArray[0]] = setArray[1];
@@ -82,34 +82,34 @@ HELPER.stringToAbject = (str) => {
 }
 
 
-HELPER.commentOpen = (type) =>{
-    if( type == 'plist'){
+HELPER.commentOpen = (type) => {
+    if (type == 'plist') {
         type = 'xml';
     }
-    if (type == "properties" || type == "Podfile" ){
+    if (type == "properties" || type == "Podfile") {
         return `#`
     }
-    if( type == "xml"){
+    if (type == "xml") {
         return `<!--`
     }
     return `/*`
 }
 
-HELPER.commentClose = (type) =>{
-    if( type == 'plist'){
+HELPER.commentClose = (type) => {
+    if (type == 'plist') {
         type = 'xml';
     }
-    if (type == "properties" || type == "Podfile" ){
+    if (type == "properties" || type == "Podfile") {
         return `#`
     }
-    if( type == "xml"){
+    if (type == "xml") {
         return `-->`
     }
     return `*/`
 }
 
 HELPER.commentStart = (data) => {
-    if (data.print){
+    if (data.print) {
         return `${HELPER.commentOpen(data.type)} M5 START ${data.msg} ${HELPER.commentClose(data.type)}\n`
     }
     return ""
@@ -150,11 +150,11 @@ HELPER.findThenUpdateContent = (data) => {
     }
 
     return data.originalContent.replace(data.regex, function (res) {
-        if (data.updateType == "before"){
+        if (data.updateType == "before") {
             return "\n" + fileContent + "\n" + res
-        }else if(data.updateType == "after"){
+        } else if (data.updateType == "after") {
             return res + "\n" + fileContent
-        }else{// replace
+        } else {// replace
             return fileContent
         }
     })
@@ -173,7 +173,7 @@ HELPER.message = (msg, type = "default", calback) => {
         console.log(msg)
         cb()
         console.log(`/***********************/`)
-        console.log('\x1b[0m');                  
+        console.log('\x1b[0m');
         process.exit(1);
     }
     if (type == "warning") {
@@ -182,7 +182,7 @@ HELPER.message = (msg, type = "default", calback) => {
         console.log(msg)
         cb()
         console.log('\x1b[33m', `/***********************/`)
-        console.log('\x1b[0m');                    
+        console.log('\x1b[0m');
     }
     if (type == "success") {
         console.log('\x1b[32m')
@@ -190,7 +190,7 @@ HELPER.message = (msg, type = "default", calback) => {
         console.log(msg)
         cb()
         console.log('\x1b[32m', `/***********************/`)
-        console.log('\x1b[0m');                  
+        console.log('\x1b[0m');
     }
     if (type == "default") {
         console.log(`/***********************/`)
@@ -201,55 +201,55 @@ HELPER.message = (msg, type = "default", calback) => {
 }
 
 HELPER.getExtention = (filePath) => {
-    if( /\./.test(filePath)){
+    if (/\./.test(filePath)) {
         return HELPER.getLastArray(filePath.split("."));
-    }else{
+    } else {
         return HELPER.getLastArray(filePath.split("/"));
     }
 }
 
 HELPER.setOptions = (options) => {
-    if( options[1] == "comp"){
+    if (options[1] == "comp") {
         return {
-            task : options[0],
-            type : options[1],
-            compType : options[2],
-            name : options[3]
-        }        
-    } else if (options[0] == "create" || options[0] == "c" ){
+            task: options[0],
+            type: options[1],
+            compType: options[2],
+            name: options[3]
+        }
+    } else if (options[0] == "create" || options[0] == "c") {
         return {
             task: "create",
             type: options[1],
             name: options[2],
         }
-    } else if (options[0] == "run"){
+    } else if (options[0] == "run") {
         return {
             task: options[0],
             name: options[1],
         }
-    
-    } else if (options[0] == "add"){
+
+    } else if (options[0] == "add") {
         const versionName = HELPER.getVersionName(options[1]);
-        const otherValue = HELPER.stringToAbject(options[2]); 
+        const otherValue = HELPER.stringToAbject(options[2]);
         return {
             task: options[0],
             name: versionName.name,
             version: versionName.version,
             ...otherValue
-        } 
-    }else{
+        }
+    } else {
         const versionName = HELPER.getVersionName(options[1])
         return {
-            task : options[0],
-            type : versionName.name,
-            name : HELPER.validateName(options[2]),
-            version : versionName.version
-        }        
+            task: options[0],
+            type: versionName.name,
+            name: HELPER.validateName(options[2]),
+            version: versionName.version
+        }
     }
 
 }
 
-HELPER.getFileContent = (path) =>{
+HELPER.getFileContent = (path) => {
     return fs.readFileSync(path, 'utf8');
 }
 
@@ -264,25 +264,25 @@ HELPER.getFileContentFromM5 = (data, filePath) => {
 }
 
 HELPER.getPluginInfo = (type, cmd) => {
-    if (cmd[type]){
+    if (cmd[type]) {
         return cmd[type]
     }
     return null
 }
 
 HELPER.jsonToObject = (data) => {
-    try{
+    try {
         JSON.parse(data)
-    }catch (e){
+    } catch (e) {
         throw e
     }
     return JSON.parse(data)
 }
 
 HELPER.validateName = (name, includeNumber) => {
-    if ( name && includeNumber ){
+    if (name && includeNumber) {
         return name.replace(/\s|\~|\!|\@|\#|\$|\%|\^|\&|\*|\(|\)|\_|\+|\=|\-|\'|\"|\;|\:|\?|\/|\>|\<|\,|\.|\\|\]|\[|\}|\{|\|/g, '')
-    }else if( name ){
+    } else if (name) {
         return name.replace(/\s|\~|\!|\@|\#|\$|\%|\^|\&|\*|\(|\)|\_|\+|\=|\-|\'|\"|\;|\:|\?|\/|\>|\<|\,|\.|\\|\d|\]|\[|\}|\{|\|/g, '')
     }
     return 0
@@ -297,10 +297,10 @@ HELPER.cutPathByString = (path, str) => {
 }
 
 HELPER.getBaseComponent = (type) => {
-    if( type == "atoms"){
+    if (type == "atoms") {
         return "BaseFunction.js"
     }
-    if( type == "container"){
+    if (type == "container") {
         return "BaseContainer.js"
     }
     return "BaseClass.js"
@@ -308,46 +308,46 @@ HELPER.getBaseComponent = (type) => {
 
 HELPER.getCompType = (name) => {
 
-    if( name == "molecule"){
+    if (name == "molecule") {
         return "molecules"
     }
 
-    if( name == "m"){
+    if (name == "m") {
         return "molecules"
     }
 
-    if( name == "a"){
+    if (name == "a") {
         return "atoms"
     }
 
-    if( name == "atom"){
+    if (name == "atom") {
         return "atoms"
     }
 
-    if( name == "container"){
+    if (name == "container") {
         return "container"
     }
-    if( name == "containers"){
-        return "container"
-    }
-
-    if( name == "c"){
+    if (name == "containers") {
         return "container"
     }
 
-    if( name == "organisms"){
+    if (name == "c") {
+        return "container"
+    }
+
+    if (name == "organisms") {
         return "organisms"
     }
-    if( name == "organism"){
+    if (name == "organism") {
         return "organisms"
     }
 
-    if( name == "o"){
+    if (name == "o") {
         return "organisms"
     }
 }
 HELPER.validateFilePath = (data, filePath) => {
-    if( /__APP_NAME__/.test(filePath)){
+    if (/__APP_NAME__/.test(filePath)) {
         return filePath.replace(/__APP_NAME__/, data.appJson.name);
     }
     return filePath
@@ -355,7 +355,7 @@ HELPER.validateFilePath = (data, filePath) => {
 
 HELPER.getCompTargetDir = (compDir, cmd) => {
     const type = HELPER.getCompType(cmd.compType)
-    if( type == "container"){
+    if (type == "container") {
         return `${compDir}/${cmd.name}`
     }
     return `${compDir}/${type}/${cmd.name}`
@@ -370,7 +370,7 @@ HELPER.toArr = (str, splitBy) => {
     return str.split(splitBy);
 }
 
-HELPER.createComponentName= (name) => {
+HELPER.createComponentName = (name) => {
     const nameArr = HELPER.toArr(name, "-");
     let nameCapital = [];
     for (let index = 0; index < nameArr.length; index++) {
@@ -379,7 +379,7 @@ HELPER.createComponentName= (name) => {
     return nameCapital.join("")
 }
 
-HELPER.createComponentTitle= (name) => {
+HELPER.createComponentTitle = (name) => {
     const nameArr = HELPER.toArr(name, "-");
     let nameCapital = [];
     for (let index = 0; index < nameArr.length; index++) {
@@ -417,18 +417,18 @@ HELPER.getLastArray = (arr) => {
     return arr
 }
 
-HELPER.execAsync = (cmd, opts={}) => {
-    return new Promise(function(resolve, reject) {
+HELPER.execAsync = (cmd, opts = {}) => {
+    return new Promise(function (resolve, reject) {
         console.log("====================================== ");
         console.log("============= START EXEC ============= ");
         console.log(cmd);
         console.log("=============  END EXEC  ============= ");
         console.log("====================================== ");
-        sh.exec(cmd, opts, function(code, stdout, stderr) {
+        sh.exec(cmd, opts, function (code, stdout, stderr) {
             resolve({
-                code : !code,
-                stdout : stdout,
-                stderr : stderr
+                code: !code,
+                stdout: stdout,
+                stderr: stderr
             });
         });
     });
