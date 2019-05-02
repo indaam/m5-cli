@@ -26,24 +26,44 @@ function paramsToObject(entries) {
     return result;
 }
 
+HELPER.createObjectList = (data) => {
+    const { nativePlugins } = data;
+    const list = [];
+
+    for (let d in nativePlugins){
+        list.push({
+            title: HELPER.createComponentTitle(d),
+            navigation: HELPER.createComponentName(d),
+        })
+    }
+
+    return `const navigationList = ${JSON.stringify(list, null, 2)}`;
+
+}
+
 HELPER.createImportList = (data) => {
+    const open = `/* M5 import */\n`;
+    const close = `\n/* end M5 import */`;
+
     const importList = [];
     for( let d in data){
         const componentName = HELPER.createComponentName(d);
-        const importName = `import ${componentName} from "./${componentName}";`;
+        const importName = `import ${componentName} from "../containers/${componentName}";`;
         importList.push(importName)
     }
-    return importList.join("\n");
+    return open + importList.join("\n") + close;
 }
 
 HELPER.createsSreenList = (data) => {
-    console.log(data);
-    const screenList = [];
+    const screenList = {
+        "LandingScreen": "LandingScreen"
+    };
+
     for( let d in data){
         const componentName = HELPER.createComponentName(d);
-        screenList.push("\t" + componentName)
+        screenList[componentName] = componentName;
     }
-    return screenList.join(",\n");
+    return `const screenList = ` + JSON.stringify(screenList, null, 4).replace(/"|'/g, "");
 }
 
 HELPER.stringToAbject = (str) => {
@@ -61,17 +81,131 @@ HELPER.stringToAbject = (str) => {
     return obj
 }
 
-HELPER.createNavigationList = () => {
 
+HELPER.commentOpen = (type) =>{
+    if( type == 'plist'){
+        type = 'xml';
+    }
+    if (type == "properties" || type == "Podfile" ){
+        return `#`
+    }
+    if( type == "xml"){
+        return `<!--`
+    }
+    return `/*`
 }
 
+HELPER.commentClose = (type) =>{
+    if( type == 'plist'){
+        type = 'xml';
+    }
+    if (type == "properties" || type == "Podfile" ){
+        return `#`
+    }
+    if( type == "xml"){
+        return `-->`
+    }
+    return `*/`
+}
+
+HELPER.commentStart = (data) => {
+    if (data.print){
+        return `${HELPER.commentOpen(data.type)} M5 START ${data.msg} ${HELPER.commentClose(data.type)}\n`
+    }
+    return ""
+}
+
+HELPER.commentEnd = (data) => {
+    if (data.print) {
+        return `\n${HELPER.commentOpen(data.type)} M5 END ${data.msg} ${HELPER.commentClose(data.type)}`
+    }
+    return ""
+}
+
+
 HELPER.findThenUpdateContent = (data) => {
-    return data.content.replace(data.regex, function (res) {
-        if (data.updateType == "before"){
-            return data.updateContent + "\n" + res + "\n"
-        }
-        return res + "\n" + data.updateContent + "\n"
+    // console.log("data===>");
+    // console.log(data);
+    // process.exit();
+    const commentStart = HELPER.commentStart({
+        print: data.commentDisplay,
+        msg: data.commentMsg,
+        type: data.commentType
     })
+
+    const commentEnd = HELPER.commentEnd({
+        print: data.commentDisplay,
+        msg: data.commentMsg,
+        type: data.commentType
+    });
+
+    const fileContent = commentStart + data.fileContent + commentEnd;
+
+    if (data.updateType == "firstline") {
+        return fileContent + "\n" + data.originalContent
+    }
+
+    if (data.updateType == "lastline") {
+        return data.originalContent + "\n" + fileContent
+    }
+
+    return data.originalContent.replace(data.regex, function (res) {
+        if (data.updateType == "before"){
+            return "\n" + fileContent + "\n" + res
+        }else if(data.updateType == "after"){
+            return res + "\n" + fileContent
+        }else{// replace
+            return fileContent
+        }
+    })
+}
+
+
+HELPER.message = (msg, type = "default", calback) => {
+    function cb() {
+        if (typeof calback == "function") {
+            calback()
+        }
+    }
+    if (type == "error") {
+        console.log()
+        console.log('\x1b[31m', `/***********************/`)
+        console.log(msg)
+        cb()
+        console.log(`/***********************/`)
+        console.log('\x1b[0m');                  
+        process.exit(1);
+    }
+    if (type == "warning") {
+        console.log('\x1b[33m')
+        console.log(`/***********************/`)
+        console.log(msg)
+        cb()
+        console.log('\x1b[33m', `/***********************/`)
+        console.log('\x1b[0m');                    
+    }
+    if (type == "success") {
+        console.log('\x1b[32m')
+        console.log(`/***********************/`)
+        console.log(msg)
+        cb()
+        console.log('\x1b[32m', `/***********************/`)
+        console.log('\x1b[0m');                  
+    }
+    if (type == "default") {
+        console.log(`/***********************/`)
+        console.log(msg)
+        cb()
+        console.log(`/***********************/`)
+    }
+}
+
+HELPER.getExtention = (filePath) => {
+    if( /\./.test(filePath)){
+        return HELPER.getLastArray(filePath.split("."));
+    }else{
+        return HELPER.getLastArray(filePath.split("/"));
+    }
 }
 
 HELPER.setOptions = (options) => {
@@ -82,9 +216,9 @@ HELPER.setOptions = (options) => {
             compType : options[2],
             name : options[3]
         }        
-    } else if (options[0] == "create" ){
+    } else if (options[0] == "create" || options[0] == "c" ){
         return {
-            task: options[0],
+            task: "create",
             type: options[1],
             name: options[2],
         }
@@ -245,14 +379,35 @@ HELPER.createComponentName= (name) => {
     return nameCapital.join("")
 }
 
+HELPER.createComponentTitle= (name) => {
+    const nameArr = HELPER.toArr(name, "-");
+    let nameCapital = [];
+    for (let index = 0; index < nameArr.length; index++) {
+        nameCapital.push(HELPER.toCapital(nameArr[index]))
+    }
+    return nameCapital.join(" ")
+}
+
 HELPER.getPluginVersion = (data) => {
     return data.pluginVersion ? data.pluginVersion : data["version"][data.pluginName]
 }
 
-HELPER.message = (msg) => {
-    console.log("=========================");
-    console.log(msg);
-    console.log("=========================");
+HELPER.getDir = () => {
+    return {
+        current: process.cwd(),
+        m5: HELPER.getm5Path(__dirname)
+    }
+}
+
+HELPER.getPluginsName = (data) => {
+    const version = HELPER.getPluginVersion(data);
+    if (data.pluginKey) {
+        return {
+            "version": version,
+            "key": data.pluginKey
+        }
+    }
+    return version
 }
 
 HELPER.getLastArray = (arr) => {
