@@ -3,3 +3,6 @@
 node_modules/
 npm-debug.log
 yarn-error.log
+indaam.note.md
+.DS_Store
+files/
