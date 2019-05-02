@@ -26,10 +26,8 @@ function paramsToObject(entries) {
     return result;
 }
 
-HELPER.createObjectList = (data) => {
-    const { nativePlugins } = data;
+HELPER.createNavigationList = (nativePlugins) => {
     const list = [];
-
     for (let d in nativePlugins) {
         list.push({
             title: HELPER.createComponentTitle(d),
@@ -193,10 +191,8 @@ HELPER.message = (msg, type = "default", calback) => {
         console.log('\x1b[0m');
     }
     if (type == "default") {
-        console.log(`/***********************/`)
         console.log(msg)
         cb()
-        console.log(`/***********************/`)
     }
 }
 
