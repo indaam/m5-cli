@@ -8,7 +8,7 @@ module.exports = async (cmd) => {
         current: process.cwd()
     }
 
-    class createHtml {
+    class CreateHtml {
 
         constructor(options) {
             this.cmd = options;
@@ -59,7 +59,7 @@ module.exports = async (cmd) => {
         }
     }
 
-    const html = new createHtml(cmd);
+    const html = new CreateHtml(cmd);
     html.init();
 
 }

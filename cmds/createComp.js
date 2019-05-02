@@ -8,7 +8,7 @@ module.exports = async (cmd) => {
         m5: HELPER.getm5Path(__dirname),
     }
 
-    class createComp {
+    class CreateComp {
 
         constructor(options) {
             this.cmd = options;
@@ -115,7 +115,7 @@ module.exports = async (cmd) => {
         }
     }
 
-    const comp = new createComp(cmd);
+    const comp = new CreateComp(cmd);
     comp.init();
 
 }
