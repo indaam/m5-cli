@@ -76,7 +76,7 @@ module.exports = async (cmd) => {
             packageJsonContentObj["scripts"]["reload"] = "adb shell input keyevent 82";
             packageJsonContentObj["scripts"]["r"] = "yarn reload";
             packageJsonContentObj["scripts"]["clean-watch"] = "watchman watch-del-all && rm -rf $TMPDIR/react-native-packager-cache-* && rm -rf $TMPDIR/metro-bundler-cache-*";
-            packageJsonContentObj["scripts"]["cw"] = "clean-watch";
+            packageJsonContentObj["scripts"]["cw"] = "yarn clean-watch";
             packageJsonContentObj["scripts"]["clean-package"] = "rm -rf node_modules/ && npm cache verify && yarn install";
             packageJsonContentObj["scripts"]["cp"] = "yarn clean-package";
             packageJsonContentObj["scripts"]["pod"] = "cd ios && pod install";
