@@ -44,9 +44,71 @@ Create container MyCont component
 When you first create component, it will create m5 folder. Then on m5 folder, you can see BaseClass, BaseFunction, etc. Basicly ya, just copy then rename component name, You can update that.  
 Also if need to change target component, you can edit m5.config, then generate new component
 
+## New Install react native plugins  
+This task for automaticly install react-native plugins, like google maps, camera, etc
+
+#### Command Example
+`m5 add react-native-maps` or  
+`m5 add react-native-maps@0.24.2` or    
+`m5 add react-native-maps@0.24.2 key="___YOUR_GOOGLE_MAP_KEY___"`
+
+#### Output
+* Automatic add to package.json
+* Automatic linking
+* Automatic setup
+* Add sample
+
+#### Run Demo  
+After you type `m5 add react-native-maps`, you can run the demo  
+`m5 demo`
+
+### Plugins list todos
++ react-native-maps
+    - Android [DONE]
+    - iOs [DONE]
++ react-native-gesture-handler
+    - Android [DONE]
+    - iOs [DONE]
++ react-native-camera
+    - Android [DONE]
+    - iOs [DONE](without test)
++ react-native-contacts
+    - Android [DONE]
+    - iOs [DONE]
++ react-native-device-info
+    - Android [DONE]
+    - iOs [DONE]
++ react-native-svg
+    - Android [DONE]
+    - iOs [DONE]
++ react-native-firebase
+    - Android [PENDING]
+    - iOs [PENDING]
++ react-native-fbsdk
+    - Android [PENDING]
+    - iOs [PENDING]
++ react-native-google-signin
+    - Android [PENDING]
+    - iOs [PENDING]
++ react-native-fs
+    - Android [PENDING]
+    - iOs [PENDING]
++ react-native-share
+    - Android [PENDING]
+    - iOs [PENDING]
++ lottie-react-native
+    - Android [PENDING]
+    - iOs [PENDING]
++ lottie-react-info
+    - Android [PENDING]
+    - iOs [PENDING]
+
 ## Todos
 
 * Command validation
 * Option command
-* Dinamic Component
+* Create dinamic Component
+* Maping after create component
 * Create Log
+* When internet error
+* checking tools & version
