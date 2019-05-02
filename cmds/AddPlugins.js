@@ -168,6 +168,7 @@ module.exports = async (cmd) => {
             if(info.pluginName == "react-native-maps"){
                 HELPER.message(`!IMPORTANT\nThis plugins need to anable google maps api library, \nGoto : https://console.developers.google.com/apis/library`, "warning");
             }
+            this.end(info, config);
         }
 
         async installPackage(info) {
@@ -288,7 +289,6 @@ module.exports = async (cmd) => {
             }else{
                 HELPER.message(`SUCCESS SETUP ${(info.pluginName).toUpperCase()}.\nTry, m5 demo to see`, 'success');
             }
-            process.exit();
         }
 
         async updateAppJson(info, config){
@@ -304,7 +304,11 @@ module.exports = async (cmd) => {
             }
 
             fs.writeFileSync(`${info.projectPath}/app.json`, JSON.stringify(appJson, null, 2), 'utf8');
-            this.end(info, config);
+        }
+
+        async updatePod(info, config){
+            HELPER.message("RUN updatePod");
+            return await HELPER.execAsync(`cd ${info.projectPath}/ios && pod install`)
         }
 
         async runCmd(){
@@ -314,11 +318,13 @@ module.exports = async (cmd) => {
             const { config } = this;
             this.run["setup"] = await this.setup(info, config);
             this.run["updateAppJson"] = await this.updateAppJson(info, config);
+            this.run["updatePod"] = await this.updatePod(info, config);
             this.run["setMessage"] = await this.setMessage(info, config);
+            return 1
         }
 
-        init() {
-            this.runCmd();
+        async init() {
+            await this.runCmd();
         }
     }
 
@@ -327,10 +333,6 @@ module.exports = async (cmd) => {
         dir : HELPER.getDir()
     });
 
-
-    runPlugins.init();
-
-
-    
+    return await runPlugins.init();
 
 }
