@@ -5,7 +5,6 @@ const error = require('./utils/error');
 const cmd = () => {
     const [, , ...args] = process.argv;
     const cmd = HELPER.setOptions(args);
-    console.log(cmd);
     if (cmd.task == "create") {
         switch (cmd.type) {
             case 'html':
@@ -28,7 +27,11 @@ const cmd = () => {
         }
     } else if (cmd.task == "demo") {
         require('./cmds/Demo')({ ...cmd, ...CONFIG })
-    } else if (cmd.task == "add") {
+    } else if( cmd.task == "fonts"){
+        require('./cmds/Fonts')({ ...cmd, ...CONFIG })
+    }else if(cmd.task == "install") {
+        require('./cmds/Install')({ ...cmd, ...CONFIG })
+    }else if (cmd.task == "add") {
         require('./cmds/AddPlugins')({ ...cmd, ...CONFIG })
     } else if (/-v|-version|v|version/.test(cmd.task)) {
         require('./cmds/version')(args)
