@@ -80,6 +80,10 @@ module.exports = async (cmd) => {
             packageJsonContentObj["scripts"]["clean-package"] = "rm -rf node_modules/ && npm cache verify && yarn install";
             packageJsonContentObj["scripts"]["cp"] = "yarn clean-package";
             packageJsonContentObj["scripts"]["pod"] = "cd ios && pod install";
+            packageJsonContentObj["scripts"]["clean-android"] = "rm -rf android/app/build && cd android && ./gradlew clean";
+            packageJsonContentObj["scripts"]["ca"] = "yarn clean-android";
+            packageJsonContentObj["scripts"]["clean-ios"] = "cd ios && rm -rf Pods/ && rm -rf build/ && rm Podfile.lock && pod install";
+            packageJsonContentObj["scripts"]["ci"] = "yarn clean-ios";
 
             fs.writeFileSync(`${data.projectPath}/package.json`, JSON.stringify(packageJsonContentObj, null, 2), 'utf8');
 
