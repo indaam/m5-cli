@@ -95,6 +95,20 @@ module.exports = async (cmd) => {
             return fs.writeFileSync(`${info.projectPath}/app.json`, JSON.stringify(appJson, null, 2), 'utf8');
         }
 
+        async checkFont(info, fontInfo){
+            const { fontFamily, path } = fontInfo;
+            const fontList = HELPER.getFontListByName(path, fontFamily); 
+
+            if( fontList && fontList.length){
+                HELPER.message("Error!\nFont is exist, try another font", "error");
+            }
+        }
+
+        async addMessage(info, fontInfo){
+            const { fontFamily, path } = fontInfo;
+            HELPER.message(`SUCCESS add ${fontFamily}\nTo see the demo type\nm5 demo && react-native run-ios\nor react-native run-android for android`, "success");
+        }
+
         async setupFonts(info){
             const { cmd } = info;
             const fontName = HELPER.getFontName(cmd);
@@ -119,12 +133,15 @@ module.exports = async (cmd) => {
                 await HELPER.execAsync(`cd ${info.projectPath}/assets && mkdir fonts`)
             }
 
+
+            await this.checkFont(info, fontInfo);
             await this.download(info, fontInfo);
             await this.unzip(info, fontInfo);
             await this.clean(info, fontInfo);
             await this.setRnpm(info, fontInfo);
             await this.defineOnAppJson(info, fontInfo);
             await this.reLink(info, fontInfo);
+            await this.addMessage(info, fontInfo);
 
         }
 

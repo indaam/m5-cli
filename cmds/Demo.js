@@ -26,7 +26,7 @@ module.exports = async (cmd) => {
 
         async cloneDemo(info){
             HELPER.message("RUN cloneDemo");
-            return await HELPER.execAsync(`cd ${info.projectPath} && git clone https://github.com/aleph-m5/m5-cli-react-native-demo ${demoDirName} && cd ${demoDirName} && rm -rf .git`);
+            return await HELPER.execAsync(`cd ${info.projectPath} && git clone ${CONFIG.repo.reactNativeDemo} ${demoDirName} && cd ${demoDirName} && rm -rf .git && rm .gitignore`);
         }
 
         async updateRoutes(info){
@@ -64,7 +64,7 @@ module.exports = async (cmd) => {
         async updateRootIndex(info){
             HELPER.message("RUN updateRootIndex");
             let indexRootContent = HELPER.getFileContentFromProject(info, "index.js");
-            indexRootContent = indexRootContent.replace(/import(\s)(App)(\s)from(\s)("|')(.){1,20}('|");/gi, `import App from "./M5Demo/App";`)
+            indexRootContent = indexRootContent.replace(/import(\s)(App)(\s)from(\s)("|')(.){1,20}('|");/gi, `import App from "./${demoDirName}/App";`)
             return fs.writeFileSync(`${info.projectPath}/index.js`, indexRootContent, 'utf8');
         }
 
@@ -176,12 +176,11 @@ module.exports = async (cmd) => {
 
 }
 
-
 const fontTemplate = (fontFamilyList, propsLists, textLists) => {
 const data = `
 /**
  * This is file generated
- * author : indaam<indaam@gmail.com>
+ * author : indaam<http://github.com/indaam>
  */
 
 import React, { Component } from "react";
@@ -223,7 +222,3 @@ export default class FontOpenSans extends BaseContainer {
 `;
 return data
 }
-
-
-// iTodo
-// check when font exist
