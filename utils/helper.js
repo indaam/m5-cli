@@ -26,7 +26,49 @@ function paramsToObject(entries) {
     return result;
 }
 
-HELPER.createNavigationList = (nativePlugins) => {
+HELPER.getFontWeightByFileName = (fontName, str) => {
+    return str.replace(`${fontName}-`, "").replace('.ttf', '');
+}
+
+HELPER.getFontFamilyByFileName = (str) => {
+
+}
+
+HELPER.createFontFamilyList = (fontName, data) => {
+    const temp = [];
+    for( let d of data){
+        const fontWeight = HELPER.getFontWeightByFileName(fontName, d);
+        temp.push(`"${fontWeight}" : "${fontName}-${fontWeight}"`);
+    }
+    return `\t` + temp.join(',\n\t');
+}
+
+HELPER.createPropsLists = (fontName, data) => {
+    const temp = [];
+    for( let d of data){
+        const fontWeight = HELPER.getFontWeightByFileName(fontName, d);
+        temp.push(`props.${fontWeight} ? fontWeight = '${fontWeight}' : void 0;`);
+    }
+    return `\t` + temp.join('\n\t');
+}
+
+HELPER.createTextLists = (fontName, data) => {
+    const temp = [];
+    for( let d of data){
+        const fontWeight = HELPER.getFontWeightByFileName(fontName, d);
+        temp.push(`
+            <View style={{marginBottom : 12}}>
+                <Text ${fontWeight} style={{ fontSize: 14, color : COLORS.softBlack }}>Hai, I am ${fontName} ${fontWeight}</Text>
+                <Text ${fontWeight} style={{ fontSize: 14, color : COLORS.softBlack }}>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</Text>
+            </View>
+        `);
+    }
+    return temp.join('\n');
+}
+
+
+
+HELPER.createNavigationList = (nativePlugins, fonts) => {
     const list = [];
     for (let d in nativePlugins) {
         list.push({
@@ -35,32 +77,57 @@ HELPER.createNavigationList = (nativePlugins) => {
         })
     }
 
+    if( fonts ){
+        for( let f in fonts){
+            list.push({
+                title: `Font ${f}`,
+                navigation: `Font${f}`,
+            })
+        }
+    }
+
     return `const navigationList = ${JSON.stringify(list, null, 2)}`;
 
 }
 
-HELPER.createImportList = (data) => {
+HELPER.createImportList = (nativePlugins, fonts) => {
     const open = `/* M5 import */\n`;
     const close = `\n/* end M5 import */`;
 
     const importList = [];
-    for (let d in data) {
+    for (let d in nativePlugins) {
         const componentName = HELPER.createComponentName(d);
         const importName = `import ${componentName} from "../containers/${componentName}";`;
         importList.push(importName)
     }
+
+    if( fonts ){
+        for (let d in fonts) {
+            const importName = `import Font${d} from "../containers/Font${d}";`;
+            importList.push(importName)
+        }
+    }
+
+
     return open + importList.join("\n") + close;
 }
 
-HELPER.createsSreenList = (data) => {
+HELPER.createsSreenList = (nativePlugins, fonts) => {
     const screenList = {
         "LandingScreen": "LandingScreen"
     };
 
-    for (let d in data) {
+    for (let d in nativePlugins) {
         const componentName = HELPER.createComponentName(d);
         screenList[componentName] = componentName;
     }
+
+    if( fonts ){
+        for (let d in fonts) {
+            screenList[`Font${d}`] = `Font${d}`;
+        }
+    }
+
     return `const screenList = ` + JSON.stringify(screenList, null, 4).replace(/"|'/g, "");
 }
 
@@ -93,6 +160,44 @@ HELPER.commentOpen = (type) => {
     return `/*`
 }
 
+HELPER.getPackageValue = (data) => {
+    if (typeof data == "string") {
+        return {
+            version: data,
+            key: null
+        }
+    }
+    return {
+        version: data["version"],
+        key: data["key"]
+    }
+}
+
+HELPER.createTaskFromObject = (data) => {
+
+    const cmd = {
+        task: 'add',
+        name: 'react-native-gesture-handler',
+        version: null,
+        key: null
+    }
+
+    const temp = [];
+    for (let k in data) {
+        const packageValue = HELPER.getPackageValue(data[k]);
+        temp.push({
+            task: 'add',
+            name: k,
+            version: packageValue["version"],
+            key: packageValue["key"]
+        })
+    }
+
+    return temp
+
+
+}
+
 HELPER.commentClose = (type) => {
     if (type == 'plist') {
         type = 'xml';
@@ -122,9 +227,6 @@ HELPER.commentEnd = (data) => {
 
 
 HELPER.findThenUpdateContent = (data) => {
-    // console.log("data===>");
-    // console.log(data);
-    // process.exit();
     const commentStart = HELPER.commentStart({
         print: data.commentDisplay,
         msg: data.commentMsg,
@@ -158,6 +260,43 @@ HELPER.findThenUpdateContent = (data) => {
     })
 }
 
+HELPER.generateUsesPermissions = (data) => {
+    const temp = [];
+    for (const d of data) {
+        // console.log(d);
+        temp.push(`<uses-permission android:name="android.permission.${d}" />`)
+    }
+    return temp.join("\n");
+}
+
+HELPER.getPermissionsList = (data) => {
+    const re = /\<uses-permission(\s)android:name="(.+)"(\s)?\/\>/g;
+    const reContent = /android:name="(.+)"/g;
+    const reRemove = /android\:name\=\"android\.permission\./g;
+
+    let permissionsList = HELPER.uniqueArray(data.match(re));
+
+    const temp = [];
+    for (let uses of permissionsList) {
+        uses = (uses.match(reContent)[0]).replace(reRemove, "").replace('"', '');
+        temp.push(uses)
+    }
+
+    return temp
+
+}
+
+HELPER.uniqueArray = (arr) => {
+    if (!arr && !arr.length) {
+        return []
+    }
+    var a = [];
+    for (var i = 0, l = arr.length; i < l; i++)
+        if (a.indexOf(arr[i]) === -1 && arr[i] !== '')
+            a.push(arr[i]);
+    return a;
+}
+
 
 HELPER.message = (msg, type = "default", calback) => {
     function cb() {
@@ -166,8 +305,8 @@ HELPER.message = (msg, type = "default", calback) => {
         }
     }
     if (type == "error") {
-        console.log()
-        console.log('\x1b[31m', `/***********************/`)
+        console.log('\x1b[31m')
+        console.log(`/***********************/`)
         console.log(msg)
         cb()
         console.log(`/***********************/`)
@@ -179,7 +318,8 @@ HELPER.message = (msg, type = "default", calback) => {
         console.log(`/***********************/`)
         console.log(msg)
         cb()
-        console.log('\x1b[33m', `/***********************/`)
+        console.log('\x1b[33m')
+        console.log(`/***********************/`)
         console.log('\x1b[0m');
     }
     if (type == "success") {
@@ -187,7 +327,8 @@ HELPER.message = (msg, type = "default", calback) => {
         console.log(`/***********************/`)
         console.log(msg)
         cb()
-        console.log('\x1b[32m', `/***********************/`)
+        console.log('\x1b[32m')
+        console.log(`/***********************/`)
         console.log('\x1b[0m');
     }
     if (type == "default") {
@@ -233,6 +374,12 @@ HELPER.setOptions = (options) => {
             version: versionName.version,
             ...otherValue
         }
+    } else if (options[0] == "fonts") {
+        return {
+            task: options[0],
+            name: options[1],
+            all: options.join(" ")
+        }
     } else {
         const versionName = HELPER.getVersionName(options[1])
         return {
@@ -245,6 +392,47 @@ HELPER.setOptions = (options) => {
 
 }
 
+HELPER.getFontName = (cmd) => {
+    const { all } = cmd;
+    return (all.split("fonts ")[1])
+    .replace(/\+/g, " ")
+    .split(" ")
+    .map(d => {
+        return HELPER.toCapital(d)
+    }).join(" ");
+}
+
+HELPER.getFontDownloadName = (fontName) => {
+    return `download?family=${encodeURIComponent(fontName)}`
+}
+
+HELPER.getFileByExtentions = (dir, ext, change) => {
+    const re = new RegExp(ext);
+    const lists = fs.readdirSync(dir);
+    const temp = [];
+    for (let d of lists) {
+        if(change && !re.test(d)){
+            temp.push(d)
+        }
+        if(!change && re.test(d)){
+            temp.push(d)
+        }
+    }
+    return temp
+}
+
+HELPER.getFontListByName = (dir, fontFamily) => {
+    const re = new RegExp(fontFamily);
+    const lists = fs.readdirSync(dir);
+    const temp = [];
+    for (let d of lists) {
+        if(re.test(d)){
+            temp.push(d)
+        }
+    }
+    return temp
+}
+
 HELPER.getFileContent = (path) => {
     return fs.readFileSync(path, 'utf8');
 }
@@ -254,8 +442,6 @@ HELPER.getFileContentFromProject = (data, filePath) => {
 }
 
 HELPER.getFileContentFromM5 = (data, filePath) => {
-    console.log("data");
-    console.log(data.dir);
     return HELPER.getFileContent(`${data.dir.m5}/${filePath}`)
 }
 
@@ -264,6 +450,10 @@ HELPER.getPluginInfo = (type, cmd) => {
         return cmd[type]
     }
     return null
+}
+
+HELPER.setFontFamily = (str) => {
+    return str.replace(/\s/g, "");
 }
 
 HELPER.jsonToObject = (data) => {
