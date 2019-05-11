@@ -180,7 +180,11 @@ module.exports = async (cmd) => {
             HELPER.message("RUN installPackage");
             // iTodo, check when error network
             const version = HELPER.getPluginVersion(info);
-            return await HELPER.execAsync(`yarn add ${info.pluginName}@${version}`);
+            if( version ){
+                return await HELPER.execAsync(`yarn add ${info.pluginName}@${version}`);
+            }else{
+                HELPER.message(`Error ${info.pluginName} not ready on m5 cli`, "error");
+            }
         }
 
         async linkPackage(info) {
