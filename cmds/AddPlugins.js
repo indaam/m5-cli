@@ -16,7 +16,9 @@ module.exports = async (cmd) => {
         "react-native-camera": "2.6.0",
         "react-native-contacts": "4.0.1",
         "react-native-svg": "9.4.0",
-        "react-native-device-info": "1.6.1"
+        "react-native-device-info": "1.6.1",
+        "lottie-react-native": "2.6.1",
+        "react-native-fbsdk": "0.8.0",
     }
 
     class AddPlugins extends BaseClass{
@@ -140,8 +142,11 @@ module.exports = async (cmd) => {
             if (!config.isSetup){
                 if (config.update["files"]) {
                     await this.setupFileUpdate(info, config)
+                    // iTodo
+                    await this.setAndroidPermissions(info, config)
                 }
             }
+
         }
 
         async setMessage(info, config){
@@ -287,7 +292,7 @@ module.exports = async (cmd) => {
             if( config.isSetup){
                 HELPER.message(`IS ALREADY SETUP ${(info.pluginName).toUpperCase()}`, 'warning');
             }else{
-                HELPER.message(`SUCCESS SETUP ${(info.pluginName).toUpperCase()}.\nTry, m5 demo to see`, 'success');
+                HELPER.message(`SUCCESS SETUP ${(info.pluginName).toUpperCase()}.\nTry, m5 demo && react-native run-ios or react-native run-android to see the demo`, 'success');
             }
         }
 
@@ -309,6 +314,37 @@ module.exports = async (cmd) => {
         async updatePod(info, config){
             HELPER.message("RUN updatePod");
             return await HELPER.execAsync(`cd ${info.projectPath}/ios && pod install`)
+        }
+
+        // git checkout android/ && m5 add react-native-contacts
+
+        async updateUsesPermissions(info, data){
+            const usesPermissions = HELPER.generateUsesPermissions(data);
+            let androidManifestContent = HELPER.getFileContentFromProject(info, "android/app/src/main/AndroidManifest.xml");
+
+            androidManifestContent = androidManifestContent.replace(/\<uses-permission[^>]+"(\s)?\/>\n/gi, "");
+            
+            androidManifestContent = HELPER.findThenUpdateContent({
+                regex : /\<manifest[^>]+\"\>/gi,
+                fileContent: usesPermissions,
+                originalContent: androidManifestContent,
+                updateType: "after",
+                commentDisplay: false,
+                commentType: null,
+                commentMsg: null,
+            });
+            return fs.writeFileSync(`${info.projectPath}/android/app/src/main/AndroidManifest.xml`, androidManifestContent, 'utf8');
+        }
+
+        async setAndroidPermissions(info, config){
+            const { update } = config;
+            if( update && update["uses-permission"]){
+                let androidManifest = HELPER.getFileContentFromProject(info, "android/app/src/main/AndroidManifest.xml");
+                const permissionsList  = HELPER.getPermissionsList(androidManifest);
+                const updatePermissionsList = [...permissionsList, ...update["uses-permission"]];
+                return await this.updateUsesPermissions(info, updatePermissionsList)
+            }
+            return 1
         }
 
         async runCmd(){
