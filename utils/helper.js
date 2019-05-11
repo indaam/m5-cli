@@ -17,21 +17,8 @@ HELPER.getVersionName = (name) => {
     }
 }
 
-function paramsToObject(entries) {
-    let result = {}
-    for (let entry of entries) { // each 'entry' is a [key, value] tupple
-        const [key, value] = entry;
-        result[key] = value;
-    }
-    return result;
-}
-
 HELPER.getFontWeightByFileName = (fontName, str) => {
     return str.replace(`${fontName}-`, "").replace('.ttf', '');
-}
-
-HELPER.getFontFamilyByFileName = (str) => {
-
 }
 
 HELPER.createFontFamilyList = (fontName, data) => {
@@ -65,7 +52,6 @@ HELPER.createTextLists = (fontName, data) => {
     }
     return temp.join('\n');
 }
-
 
 
 HELPER.createNavigationList = (nativePlugins, fonts) => {
@@ -263,8 +249,7 @@ HELPER.findThenUpdateContent = (data) => {
 HELPER.generateUsesPermissions = (data) => {
     const temp = [];
     for (const d of data) {
-        // console.log(d);
-        temp.push(`<uses-permission android:name="android.permission.${d}" />`)
+        temp.push(`\t<uses-permission android:name="android.permission.${d}" />`)
     }
     return temp.join("\n");
 }
