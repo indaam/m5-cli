@@ -5,6 +5,7 @@ const BaseClass = require('./BaseClass');
 const CONFIG = require('../config');
 
 const demoDirName = "M5Demo";
+const ONLINE = 1;
 
 module.exports = async (cmd) => {
 
@@ -26,7 +27,12 @@ module.exports = async (cmd) => {
 
         async cloneDemo(info){
             HELPER.message("RUN cloneDemo");
-            return await HELPER.execAsync(`cd ${info.projectPath} && git clone ${CONFIG.repo.reactNativeDemo} ${demoDirName} && cd ${demoDirName} && rm -rf .git && rm .gitignore`);
+            if( ONLINE ){
+                return await HELPER.execAsync(`cd ${info.projectPath} && git clone ${CONFIG.repo.reactNativeDemo} ${demoDirName} && cd ${demoDirName} && rm -rf .git && rm .gitignore`);
+            }else{
+                await execAsync(`cd ${info.projectPath} && mkdir ${demoDirName}`);
+                return await execAsync(`cd ${info.dir.m5} && cd ../m5-cli-react-native-demo && cp -Rv /. ${info.projectPath}/${demoDirName}`);
+            }
         }
 
         async updateRoutes(info){
