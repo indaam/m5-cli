@@ -4,23 +4,10 @@ const reactNativeContactsInfoPlist = `
     <key>NSContactsUsageDescription</key>
     <string></string>
 `;
-// r = /\<key\>NSLocationWhenInUseUsageDescription<\/key\>\s+(\<string\><\/string\>)/gm
-
-// after
-/*
-<key>NSLocationWhenInUseUsageDescription</key>
-<string></string>
-*/
 
 const reactNativeContactsProGuard = `
 -keep class com.rt2zz.reactnativecontacts.** {*;}
 -keepclassmembers class com.rt2zz.reactnativecontacts.** {*;}
-`;
-
-const reactNativeContactsUserPermissions = `
-<uses-permission android:name="android.permission.WRITE_CONTACTS" />
-<uses-permission android:name="android.permission.READ_PROFILE" />
-<uses-permission android:name="android.permission.WRITE_PROFILE" />
 `;
 
 const reactNativeCameraInfoPlist = `
@@ -43,6 +30,13 @@ const reactNativeMapsDependencies = `
     }
     implementation 'com.google.android.gms:play-services-base:16.0.0'
     implementation 'com.google.android.gms:play-services-maps:16.0.0'
+`;
+
+const ReactNativeDeviceInfoDependencies = `
+    implementation(project(':react-native-device-info')){
+        exclude group: 'com.google.android.gms', module: 'play-services-gcm'
+    }
+    implementation 'com.google.android.gms:play-services-gcm:16.0.0'
 `;
 
 const reactNativeMapsMetadata = `
@@ -97,12 +91,9 @@ const reactNativeCameraPackagingOptions = `
     }
 `;
 
-const reactNativeCameraUserermissions = `
-    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW"/>
-    <uses-permission android:name="android.permission.CAMERA" />
-    <uses-permission android:name="android.permission.RECORD_AUDIO"/>
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+const lottieReactNativePod = `
+    pod 'lottie-react-native', :path => '../node_modules/lottie-react-native'
+    pod 'lottie-ios', :path => '../../node_modules/lottie-ios'
 `;
 
 
@@ -231,6 +222,7 @@ inject["react-native-camera"] = {
     "firebase": true,
     "google-services": true,
     "task-wrapper": true,
+    "uses-permission" : ["SYSTEM_ALERT_WINDOW", "CAMERA", "RECORD_AUDIO", "READ_EXTERNAL_STORAGE", "WRITE_EXTERNAL_STORAGE"],
     "files": [
         {
             'type': "android",
@@ -260,13 +252,6 @@ inject["react-native-camera"] = {
             'regex': /buildTypes(\s){([^}]+)}([^}]+)}/gi
         },
         {
-            'type': "android",
-            "filePath": "android/app/src/main/AndroidManifest.xml",
-            "content": reactNativeCameraUserermissions,
-            'updateType': `after`,
-            'regex': /\<uses-permission(\s)android:name="android\.permission\.INTERNET"(\s)?\/\>/gi
-        },
-        {
             'type': "ios",
             "filePath": "ios/Podfile",
             "content": reactNativeCameraPod,
@@ -283,11 +268,11 @@ inject["react-native-camera"] = {
     ]
 }
 
-
 inject["react-native-contacts"] = {
     "firebase": false,
     "google-services": false,
     "task-wrapper": false,
+    "uses-permission" : ["WRITE_CONTACTS", "READ_PROFILE", "WRITE_PROFILE"],
     "files": [
         {
             'type': "android",
@@ -301,13 +286,6 @@ inject["react-native-contacts"] = {
             "filePath": "android/app/proguard-rules.pro",
             "content": reactNativeContactsProGuard,
             'updateType': `lastline`,
-        },
-        {
-            'type': "android",
-            "filePath": "android/app/src/main/AndroidManifest.xml",
-            "content": reactNativeContactsUserPermissions,
-            'updateType': `after`,
-            'regex': /\<uses-permission(\s)android:name="android\.permission\.INTERNET"(\s)?\/\>/gi
         },
         {
             'type': "ios",
@@ -337,14 +315,38 @@ inject["react-native-svg"] = {
 inject["react-native-device-info"] = {
     "firebase": false,
     "google-services": false,
-    "task-wrapper": false,
+    "uses-permission": ["ACCESS_WIFI_STATE", "READ_PHONE_STATE", "BLUETOOTH"],
     "files": [
         {
             'type': "android",
             "filePath": "android/app/build.gradle",
-            "content": `implementation project(':react-native-device-info')`,
+            "content": ReactNativeDeviceInfoDependencies,
             'updateType': `replace`,
             "regex": /implementation(\s)project\(\':react-native-device-info\'\)/gi
+        }
+    ]
+}
+
+
+inject["lottie-react-native"] = {
+    "firebase": false,
+    "google-services": false,
+    "task-wrapper": false,
+    "message" : 'After this, open the Xcode project configuration and add the Lottie.framework as Embedded Binaries.',
+    "files": [
+        {
+            'type': "android",
+            "filePath": "android/app/build.gradle",
+            "content": `implementation project(':lottie-react-native')`,
+            'updateType': `replace`,
+            "regex": /implementation(\s)project\(\':lottie-react-native\'\)/gi
+        },
+        {
+            'type': "ios",
+            "filePath": "ios/Podfile",
+            "content": lottieReactNativePod,
+            'updateType': `replace`,
+            'regex': /pod(\s)\'lottie-react-native\'(.*)modules\/lottie-react-native\'/gi
         }
     ]
 }
