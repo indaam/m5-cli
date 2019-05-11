@@ -28,7 +28,7 @@ inject['Podfile'] =
 target '__APP_NAME__' do
 
   # Your 'node_modules' directory is probably in the root of your project,
-  # but if not, adjust the `:path` accordingly
+  # but if not, adjust the \`:path\` accordingly
   pod 'React', :path => '../node_modules/react-native', :subspecs => [
     'Core',
     'CxxBridge',
