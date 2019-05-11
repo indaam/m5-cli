@@ -73,6 +73,7 @@ module.exports = async (cmd) => {
             packageJsonContentObj["scripts"]["a"] = "yarn android";
             packageJsonContentObj["scripts"]["ios"] = "react-native run-ios";
             packageJsonContentObj["scripts"]["i"] = "yarn ios";
+            packageJsonContentObj["scripts"]["i8"] = "react-native run-ios --simulator='iPhone 8'";
             packageJsonContentObj["scripts"]["reload"] = "adb shell input keyevent 82";
             packageJsonContentObj["scripts"]["r"] = "yarn reload";
             packageJsonContentObj["scripts"]["clean-watch"] = "watchman watch-del-all && rm -rf $TMPDIR/react-native-packager-cache-* && rm -rf $TMPDIR/metro-bundler-cache-*";
