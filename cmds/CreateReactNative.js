@@ -1,6 +1,7 @@
 const fs = require('fs');
 const HELPER = require('../utils/helper');
 const error = require('../utils/error');
+const inject = require('../utils/inject');
 
 module.exports = async (cmd) => {
 
@@ -38,7 +39,8 @@ module.exports = async (cmd) => {
         }
 
         async updatePod(data) {
-            let podContent = HELPER.getFileContentFromM5(data, "files/Podfile");
+            // let podContent = HELPER.getFileContentFromM5(data, "files/Podfile");
+            let podContent = inject['Podfile'];
             let appJsonContent = HELPER.getFileContentFromProject(data, "app.json");
 
             let appJsonObject = HELPER.jsonToObject(appJsonContent);
@@ -91,7 +93,9 @@ module.exports = async (cmd) => {
         }
 
         async addEditorConfig(data){
-            const editorconfigContent = HELPER.getFileContentFromM5(data, "files/.editorconfig");
+            // const editorconfigContent = HELPER.getFileContentFromM5(data, "files/.editorconfig");
+            const editorconfigContent = inject['editorconfig'];
+
             fs.writeFileSync(`${data.projectPath}/.editorconfig`, editorconfigContent, 'utf8');
         }
 
