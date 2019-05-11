@@ -1,6 +1,6 @@
 {
   "name": "m5-cli",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "a m5 cli",
   "main": "index.js",
   "scripts": {
@@ -29,8 +29,8 @@
     "url": "https://github.com/indaam/m5-cli/issues"
   },
   "homepage": "https://github.com/indaam/m5-cli#readme",
-  "devDependencies": {
+  "devDependencies": {},
+  "dependencies": {
     "shelljs": "^0.8.3"
-  },
-  "dependencies": {}
+  }
 }
