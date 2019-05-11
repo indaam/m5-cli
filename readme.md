@@ -45,12 +45,18 @@ When you first create component, it will create m5 folder. Then on m5 folder, yo
 Also if need to change target component, you can edit m5.config, then generate new component
 
 ## New Install react native plugins  
-This task for automaticly install react-native plugins, like google maps, camera, etc
+This task for automaticly install react-native plugins, like google maps, camera, etc.  
+Before use, u need to install
+* cocopods  
+* xcode  
+* watchman  
+* brew  
+* yarn  
 
 #### Command Example
 `m5 add react-native-maps` or  
-`m5 add react-native-maps@0.24.2` or    
-`m5 add react-native-maps@0.24.2 key="___YOUR_GOOGLE_MAP_KEY___"`
+`m5 add react-native-maps@0.24.2` or 
+`m5 add react-native-maps@0.24.2 key=___YOUR_GOOGLE_MAP_KEY___`
 
 #### Output
 * Automatic add to package.json
@@ -60,7 +66,38 @@ This task for automaticly install react-native plugins, like google maps, camera
 
 #### Run Demo  
 After you type `m5 add react-native-maps`, you can run the demo  
-`m5 demo`
+`m5 demo && react-native run-ios`
+
+### Task Install
+Basicly this task concept same like, `npm install` or `yarn install`
+You can define you plugins on app.jspn, like this  
+```
+  "displayName": "yourAppName",
+  "nativePlugins": {
+    "react-native-gesture-handler": "1.1.0",
+    "react-native-maps": {
+        "version" : "0.24.2",
+        "key" : "____YOUR_KEY____",
+    },
+    "react-native-camera": "2.6.0",
+    "react-native-contacts": "4.0.1"
+  }
+```  
+And then type `m5 install` on terminal,  
+also dont forget to type `m5 demo` for setup demo  
+To run, you can use `react-native run-ios` or `yarn ios` or `yarn i`
+
+### Task Fonts
+if your type `m5 fonts opens sans`, it will automaticly download font from google font, then setup on your RN project, also dont fotget to type `m5 demo` for see the demo
+
+
+### !IMPORTANT
+Maybe your run many RN project, so you need to clean other prject before run new project.
+We create shorcut for clean, like this
++ `yarn clean-watch` => clean javascript chache & delete all watchman
++ `yarn clean-ios` => clean all Pods, build & reinstall pod #Becarefull with pod version
++ `yarn clean-android` => gradlew clean & remove build
++ `yarn clean-package` => remove node module & reinstall node modules
 
 ### Plugins list todos
 + react-native-maps
@@ -71,7 +108,7 @@ After you type `m5 add react-native-maps`, you can run the demo
     - iOs [DONE]
 + react-native-camera
     - Android [DONE]
-    - iOs [DONE](without test)
+    - iOs [DONE] // without test
 + react-native-contacts
     - Android [DONE]
     - iOs [DONE]
@@ -85,8 +122,8 @@ After you type `m5 add react-native-maps`, you can run the demo
     - Android [PENDING]
     - iOs [PENDING]
 + react-native-fbsdk
-    - Android [PENDING]
-    - iOs [PENDING]
+    - Android [PENDING] 
+    - iOs [DONE]
 + react-native-google-signin
     - Android [PENDING]
     - iOs [PENDING]
@@ -97,11 +134,8 @@ After you type `m5 add react-native-maps`, you can run the demo
     - Android [PENDING]
     - iOs [PENDING]
 + lottie-react-native
-    - Android [PENDING]
-    - iOs [PENDING]
-+ lottie-react-info
-    - Android [PENDING]
-    - iOs [PENDING]
+    - Android [DONE]
+    - iOs [DONE]// Need to open xcode project
 
 ## Todos
 
@@ -112,3 +146,4 @@ After you type `m5 add react-native-maps`, you can run the demo
 * Create Log
 * When internet error
 * checking tools & version
+* create task remove plugins
