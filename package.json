@@ -1,6 +1,6 @@
 {
   "name": "m5-cli",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "a m5 cli",
   "main": "index.js",
   "scripts": {
