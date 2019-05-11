@@ -137,6 +137,46 @@ We create shorcut for clean, like this
     - Android [DONE]
     - iOs [DONE]// Need to open xcode project
 
+
+## Create React Native Project
+By default, if want to create react native project, you type `react-native init yourAppName` and then maybe you setup pods for ios or create shotcut scripts.  
+Next steps, maybe you will install react native plugins, like `react-native-camera` or `react-native-contacts`. But sometime install plugins is anoying, solved on ios, but not on android.  
+So, for simple solution we create cli for setup react native plugins.
+
+
+#### This is example if will install 3 plugins and 2 google font
++ 3 plugins
+    - `react-native-device-info`
+    - `react-native-maps`
+    - `react-native-contacts`
++ 2 Fonts
+    - `Open Sans`
+    - `Oswald`
+
+##### Steps  
++ `npm install -g m5-cli`
++ `cd ~/Documents/`
++ `m5 create react-native yourAppName`
++ `cd yourAppName && ls`
++ `m5 add react-native-device-info`
++ `m5 demo`
++ `react-native run-android` or `react-native run-ios`  
++ if error, try to clean watch && chache `yarn clean-watch`
++ and try again `react-native run-android` or `react-native run-ios` 
++ if success, next
++ `m5 add react-native-contacts`
++ `m5 add react-native-maps key=__YOUR_MAP__API__KEY__`
++ `m5 demo`
++ after add, you need to re run
++ `react-native run-android` or `react-native run-ios` 
++ `m5 fonts Open Sans`
++ `m5 fonts Oswald`
++ `m5 demo`
++ `react-native run-android` or `react-native run-ios` 
+
+Task `m5 demo` is automaticly create demo from plugins
+
+
 ## Todos
 
 * Command validation
